@@ -1,3 +1,7 @@
 <resources>
     <string name="app_name">VideoDetected</string>
+    <string-array name="users">
+        <item>用户1</item>
+        <item>用户2</item>
+    </string-array>
 </resources>
