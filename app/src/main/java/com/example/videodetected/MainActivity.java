@@ -6,10 +6,14 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+
+import java.time.LocalDate;
+import java.util.Calendar;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -37,5 +41,32 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
-}
+        // 动态设置侧边栏日期显示
+        set_dateinfo();
+
+
+    }
+    // 设置侧边栏日期（需要从数字转为英文）
+    void set_dateinfo() {
+        TextView day_view = findViewById(R.id.sides_day);
+        TextView month_view = findViewById(R.id.sides_month);
+        TextView week_view = findViewById(R.id.sides_week);
+
+        Calendar now = Calendar.getInstance();
+        int day = now.get(Calendar.DATE);
+        int month = now.get(Calendar.MONTH);   //month从零开始计算
+        int week = now.get(Calendar.DAY_OF_WEEK);
+        //需要考虑周日是否为一周之始
+        if(now.getFirstDayOfWeek() == Calendar.SUNDAY){
+            week--;
+        }
+        // 从数字转为英文日期表示
+        day_view.setText(Integer.toString(day));   // setText 仅接收字符串参数
+        String month_string = "Jan-Feb-Mar-Apr-May-Jun-Jul-Aug-Seg-Oct-Nov-Dec";
+        String[] month_list = month_string.split("-");
+        month_view.setText(month_list[month]);
+        String week_string = "Monday-Tuesday-Wednesday-Thursday-Friday-Saturday-Sunday";
+        String[] week_list = week_string.split("-");
+        week_view.setText(week_list[week-1]);
+    }
 }

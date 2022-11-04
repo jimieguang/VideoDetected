@@ -59,7 +59,7 @@
                         android:layout_width="wrap_content"
                         android:layout_height="wrap_content"
                         android:gravity="bottom"
-                        android:paddingBottom="10dp"
+                        android:paddingBottom="8dp"
                         android:text="Thursday"
                         android:textColor="@android:color/darker_gray"
                         android:textSize="45px" />
