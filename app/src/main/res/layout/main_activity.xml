@@ -19,12 +19,12 @@
 
                 <!-- 标题栏 toolbar -->
                 <include
-                    layout="@layout/toolbar_main"
+                    layout="@layout/main_toolbar"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
 
                 <!-- 内容区域 -->
-                <include layout="@layout/content_main" />
+                <include layout="@layout/main_content" />
 
             </LinearLayout>
 
@@ -47,12 +47,12 @@
 
                 <!-- 侧边栏toolbar（不过改作了图片显示） -->
                 <include
-                    layout="@layout/toolbar_sides"
+                    layout="@layout/sides_toolbar"
                     android:layout_width="match_parent"
                     android:layout_height="wrap_content" />
 
                 <!-- 内容区域 -->
-                <include layout="@layout/content_sides" />
+                <include layout="@layout/sides_content" />
 
             </LinearLayout>
 

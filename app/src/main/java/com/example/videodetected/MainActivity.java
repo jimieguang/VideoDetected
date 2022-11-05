@@ -6,14 +6,18 @@ import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.recyclerview.widget.LinearLayoutManager;
+import androidx.recyclerview.widget.RecyclerView;
 
-import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
 
@@ -29,7 +33,7 @@ public class MainActivity extends AppCompatActivity {
         window.setStatusBarColor(Color.TRANSPARENT);
         window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         // 进入主页
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.main_activity);
         final ImageView menu_main = findViewById(R.id.menu_main);
 
         // 点击按钮打开侧边栏
@@ -43,6 +47,23 @@ public class MainActivity extends AppCompatActivity {
 
         // 动态设置侧边栏日期显示
         set_dateinfo();
+
+        //页面主题元素渲染（recyclerview)
+        RecyclerView recyclerView = findViewById(R.id.videolist_recycler);
+        List<Video> videoList = new ArrayList<>();
+        Video video1 = new Video("这是一段尽可能要长一点的标题文字【测试】","测试用户1","3","des1","03:45",0,0,R.mipmap.sides_image);
+        Video video2 = new Video("中文测试文本2","测试用户2","3","des2","03:45",0,0,R.mipmap.sides_image);
+        Video video3 = new Video("中文测试文本3","测试用户3","3","des3","03:45",0,0,R.mipmap.sides_image);
+        videoList.add(video1);
+        videoList.add(video2);
+        videoList.add(video3);
+        // 设置LayoutManager，不设置无法显示（似乎是为了样式，但样式应该已经在Adapter中绑定了，不甚理解，待议）
+        LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
+        recyclerView.setLayoutManager(linearLayoutManager);
+        // 注入Adapter配置
+        MainAdapter mainAdapter = new MainAdapter(videoList);
+        recyclerView.setAdapter(mainAdapter);
+
 
 
     }
