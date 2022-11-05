@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="utf-8"?>
+<menu xmlns:tools="http://schemas.android.com/tools"
+    xmlns:android="http://schemas.android.com/apk/res/android">
+    <group android:checkableBehavior="single">
+        <item
+            android:id="@+id/menu_index"
+            android:title="首页"
+            android:icon="@drawable/ic_index"/>
+    </group>
+    <item android:title="功能">
+        <menu>
+            <item
+                android:title="搜索"
+                android:icon="@drawable/ic_search"/>
+            <item
+                android:title="排序"
+                android:icon="@drawable/ic_sort"/>
+        </menu>
+    </item>
+    <item android:title="更多">
+        <menu>
+            <item
+                android:title="设置"
+                android:icon="@drawable/ic_settings"/>
+            <item
+                android:title="关于"
+                android:icon="@drawable/ic_about"/>
+        </menu>
+    </item>
+
+</menu>

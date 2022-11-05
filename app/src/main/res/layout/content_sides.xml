@@ -1,14 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
+<androidx.constraintlayout.widget.ConstraintLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:fab="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/videolist_recycler"
+    <com.google.android.material.navigation.NavigationView
         android:layout_width="match_parent"
-        android:layout_height="match_parent">
-    </androidx.recyclerview.widget.RecyclerView>
+        android:layout_height="match_parent"
+        fab:layout_constraintEnd_toEndOf="parent"
+        fab:layout_constraintStart_toStartOf="parent"
+        fab:menu="@menu/side_menu">
 
-</LinearLayout>
+        <ImageView
+            android:layout_width="240dp"
+            android:layout_height="453dp"
+            android:layout_gravity="end|bottom"
+            android:src="@mipmap/sides_bg">
+        </ImageView>
+
+
+    </com.google.android.material.navigation.NavigationView>
+
+</androidx.constraintlayout.widget.ConstraintLayout>
