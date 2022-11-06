@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android">
+    <!--设置图片边框为圆角矩形（注意xml中需要显式表明遮罩/轮廓裁剪：ClipToOutline）-->
+    <solid android:color="@color/white"/>
+    <corners android:radius="12dp"/>
+
+</shape>

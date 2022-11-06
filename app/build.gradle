@@ -7,8 +7,8 @@ android {
     compileSdk 33
 
     defaultConfig {
-        applicationId "com.example.videodetected"
-        minSdk 30
+        applicationId "com.example.videodetected1"
+        minSdk 31
         targetSdk 33
         versionCode 1
         versionName "1.0"
@@ -29,6 +29,11 @@ android {
 }
 
 dependencies {
+    // https://mvnrepository.com/artifact/jp.wasabeef/blurry
+//    implementation group: 'jp.wasabeef', name: 'blurry', version: '2.1.1'
+    implementation 'jp.wasabeef:blurry:4.0.0'
+    implementation 'com.klinkerapps:sliding-activity:1.5.2'
+
     implementation 'androidx.appcompat:appcompat:1.5.1'
     implementation 'com.google.android.material:material:1.7.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'

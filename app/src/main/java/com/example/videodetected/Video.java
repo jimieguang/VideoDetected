@@ -1,6 +1,9 @@
 package com.example.videodetected;
 
-public class Video {
+import java.io.Serializable;
+
+// 继承Serializable类是为了可以通过Intent传递实体类
+public class Video implements Serializable {
     public String title;
     public String owner;
     public String upload_time;

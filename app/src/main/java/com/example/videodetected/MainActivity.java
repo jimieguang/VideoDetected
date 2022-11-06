@@ -1,5 +1,6 @@
 package com.example.videodetected;
 
+import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.view.View;
@@ -57,6 +58,11 @@ public class MainActivity extends AppCompatActivity {
         videoList.add(video1);
         videoList.add(video2);
         videoList.add(video3);
+        int i = 0;
+        while(i<20){
+            i++;
+            videoList.add(video1);
+        }
         // 设置LayoutManager，不设置无法显示（似乎是为了样式，但样式应该已经在Adapter中绑定了，不甚理解，待议）
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(linearLayoutManager);
@@ -64,11 +70,14 @@ public class MainActivity extends AppCompatActivity {
         MainAdapter mainAdapter = new MainAdapter(videoList);
         recyclerView.setAdapter(mainAdapter);
 
-
+        // 设置item点击行为
+//        recyclerView.addOnItemTouchListener(new RecyclerViewItem);
 
     }
     // 设置侧边栏日期（需要从数字转为英文）
     void set_dateinfo() {
+        String month_string = "Jan-Feb-Mar-Apr-May-Jun-Jul-Aug-Seg-Oct-Nov-Dec";
+        String week_string = "Monday-Tuesday-Wednesday-Thursday-Friday-Saturday-Sunday";
         TextView day_view = findViewById(R.id.sides_day);
         TextView month_view = findViewById(R.id.sides_month);
         TextView week_view = findViewById(R.id.sides_week);
@@ -79,14 +88,14 @@ public class MainActivity extends AppCompatActivity {
         int week = now.get(Calendar.DAY_OF_WEEK);
         //需要考虑周日是否为一周之始
         if(now.getFirstDayOfWeek() == Calendar.SUNDAY){
-            week--;
+            week_string = "Sunday-Monday-Tuesday-Wednesday-Thursday-Friday-Saturday";
         }
         // 从数字转为英文日期表示
         day_view.setText(Integer.toString(day));   // setText 仅接收字符串参数
-        String month_string = "Jan-Feb-Mar-Apr-May-Jun-Jul-Aug-Seg-Oct-Nov-Dec";
+        // 月份
         String[] month_list = month_string.split("-");
         month_view.setText(month_list[month]);
-        String week_string = "Monday-Tuesday-Wednesday-Thursday-Friday-Saturday-Sunday";
+        // 星期
         String[] week_list = week_string.split("-");
         week_view.setText(week_list[week-1]);
     }
