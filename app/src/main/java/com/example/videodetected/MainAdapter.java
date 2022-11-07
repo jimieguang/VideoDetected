@@ -56,7 +56,7 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder
                 // 可能是因为本函数定义时并没有指定具体view界面，因此无法直接使用MainActivity.this进行跳转
                 // 故使用getContext函数作为中转，先获取再跳转
                 Context context = v.getContext();
-                Toast.makeText(context,video.title,Toast.LENGTH_SHORT).show();
+//                Toast.makeText(context,video.title,Toast.LENGTH_SHORT).show();
                 // 使用bundle中转以实现传递实体类的功能
                 Intent i = new Intent(context, DetailsActivity.class);
                 Bundle bundle = new Bundle();
@@ -66,13 +66,28 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder
                 context.startActivity(i);
             }
         });
-
+        // 设置长按删除事件
+        holder.item.setOnLongClickListener(new View.OnLongClickListener() {
+            @Override
+            public boolean onLongClick(View v) {
+                // 由于删除其他元素时，本元素position可能会发生变化，因此要动态获取
+                int position = holder.getAdapterPosition();
+                removeData(position);
+                return true;
+            }
+        });
     }
 
     @Override
     public int getItemCount() {
         // item总数量
         return videoList.size();
+    }
+
+    public void removeData(int position){
+        videoList.remove(position);
+        // 增加删除动画
+        notifyItemRemoved(position);
     }
 
     class MainViewHolder extends RecyclerView.ViewHolder {

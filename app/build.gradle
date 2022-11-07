@@ -30,8 +30,7 @@ android {
 
 dependencies {
     // https://mvnrepository.com/artifact/jp.wasabeef/blurry
-//    implementation group: 'jp.wasabeef', name: 'blurry', version: '2.1.1'
-    implementation 'jp.wasabeef:blurry:4.0.0'
+//    implementation 'jp.wasabeef:blurry:4.0.1'
     implementation 'com.klinkerapps:sliding-activity:1.5.2'
 
     implementation 'androidx.appcompat:appcompat:1.5.1'
