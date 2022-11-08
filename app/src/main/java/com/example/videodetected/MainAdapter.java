@@ -61,9 +61,11 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder
                 Intent i = new Intent(context, DetailsActivity.class);
                 Bundle bundle = new Bundle();
                 bundle.putSerializable("Intent_video",video);
+                bundle.putInt("position",holder.getAdapterPosition());
                 i.putExtras(bundle);
 
-                context.startActivity(i);
+                // 从MainActivity获得监听函数，并由此调用DetailActivity，这样可以拿到返回结果以刷新数据（真麻烦）
+                MainActivity.launcher.launch(i);
             }
         });
         // 设置长按删除事件

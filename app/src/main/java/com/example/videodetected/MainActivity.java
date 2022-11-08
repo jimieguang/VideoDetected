@@ -10,6 +10,10 @@ import android.widget.ImageView;
 import android.widget.LinearLayout;
 import android.widget.TextView;
 
+import androidx.activity.result.ActivityResult;
+import androidx.activity.result.ActivityResultCallback;
+import androidx.activity.result.ActivityResultLauncher;
+import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -21,6 +25,7 @@ import java.util.Calendar;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
+    public static ActivityResultLauncher launcher;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -70,10 +75,24 @@ public class MainActivity extends AppCompatActivity {
         MainAdapter mainAdapter = new MainAdapter(videoList);
         recyclerView.setAdapter(mainAdapter);
 
-        // 设置item点击行为
-//        recyclerView.addOnItemTouchListener(new RecyclerViewItem);
+        // 设置监听器以拿到DetailActivity返回的数据（代替StartActivityForResult）
+        // 值得注意的是，该监听器仅能在OnCreate时创建，因此带来了不便（因为触发函数写在Adapter）
+        launcher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
+            @Override
+            public void onActivityResult(ActivityResult result) {
+                if (result.getResultCode() == RESULT_OK) {
+                    // 局部刷新数据
+                    Intent intent_receive = result.getData();
+                    Video new_video = (Video) intent_receive.getSerializableExtra("new_video");
+                    int position = intent_receive.getIntExtra("position",0);
+                    videoList.set(position,new_video);
+                    mainAdapter.notifyItemChanged(position);
+                }
+            }
+        });
 
     }
+
     // 设置侧边栏日期（需要从数字转为英文）
     void set_dateinfo() {
         String month_string = "Jan-Feb-Mar-Apr-May-Jun-Jul-Aug-Seg-Oct-Nov-Dec";

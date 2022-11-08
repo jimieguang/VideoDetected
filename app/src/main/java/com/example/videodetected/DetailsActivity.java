@@ -17,12 +17,14 @@ import java.util.List;
 public class DetailsActivity extends SlidingActivity {
     private Intent get_intent;
     private Video Intent_video;
+    private int position;  // 定位元素位置，回传的时候可以实现局部刷新
     private List<EditText> editTextList;
 
     @Override
     public void init(Bundle savedInstanceState) {
         get_intent = this.getIntent();
         Intent_video = (Video) get_intent.getSerializableExtra("Intent_video");
+        position = (int) get_intent.getIntExtra("position",0);
 
         // 可能是背景填充相关的颜色（由于没用到所以无所谓，但谨慎起见还是不删了）
         setPrimaryColors(
@@ -43,6 +45,7 @@ public class DetailsActivity extends SlidingActivity {
     }
     void init_header(Video video){
         ImageView video_image = findViewById(R.id.detail_image);
+        video_image.setImageResource(video.pic_id);
     }
     void init_content(Video video){
         // 获取EditText元素并将其加入list以待之后使用
@@ -115,5 +118,16 @@ public class DetailsActivity extends SlidingActivity {
                 .hideSoftInputFromWindow(v.getWindowToken(),
                         InputMethodManager.HIDE_NOT_ALWAYS);
         // 将数据存到数据库（待议）
+
+        // 构建新Video类
+        Video new_video = new Video(editTextList,Intent_video.pic_id);
+        // 返回保存消息，申请刷新数据
+        Intent i = new Intent();
+        Bundle bundle = new Bundle();
+        bundle.putSerializable("new_video",new_video);
+        bundle.putInt("position",position);
+        i.putExtras(bundle);
+        setResult(RESULT_OK,i);
+        finish();
     }
 }
