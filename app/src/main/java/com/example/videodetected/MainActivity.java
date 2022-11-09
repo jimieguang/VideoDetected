@@ -30,6 +30,7 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
+        new HttpJson().get_info();
         // 去除默认标题栏
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
         // 状态栏改为全透明
@@ -40,9 +41,9 @@ public class MainActivity extends AppCompatActivity {
         window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         // 进入主页
         setContentView(R.layout.main_activity);
-        final ImageView menu_main = findViewById(R.id.menu_main);
 
         // 点击按钮打开侧边栏
+        final ImageView menu_main = findViewById(R.id.menu_main);
         menu_main.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -54,12 +55,12 @@ public class MainActivity extends AppCompatActivity {
         // 动态设置侧边栏日期显示
         set_dateinfo();
 
-        //页面主题元素渲染（recyclerview)
+        //页面主题元素 加载/渲染（recyclerview)
         RecyclerView recyclerView = findViewById(R.id.videolist_recycler);
         List<Video> videoList = new ArrayList<>();
-        Video video1 = new Video("这是一段尽可能要长一点的标题文字【测试】","测试用户1","3","des1","03:45",0,0,R.mipmap.sides_image);
-        Video video2 = new Video("中文测试文本2","测试用户2","3","des2","03:45",0,0,R.mipmap.sides_image);
-        Video video3 = new Video("中文测试文本3","测试用户3","3","des3","03:45",0,0,R.mipmap.sides_image);
+        Video video1 = new Video("这是一段尽可能要长一点的标题文字【测试】","测试用户1","3","des1","03:45","",0,0);
+        Video video2 = new Video("中文测试文本2","测试用户2","3","des2","03:45","",0,0);
+        Video video3 = new Video("中文测试文本3","测试用户3","3","des3","03:45","",0,0);
         videoList.add(video1);
         videoList.add(video2);
         videoList.add(video3);

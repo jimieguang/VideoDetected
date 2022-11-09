@@ -12,7 +12,8 @@
 
     <FrameLayout
         android:layout_width="wrap_content"
-        android:layout_height="wrap_content">
+        android:layout_height="wrap_content"
+        android:clickable="true">
         <ImageView
             android:id="@+id/tool_sides_image"
             android:layout_width="match_parent"
