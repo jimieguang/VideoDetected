@@ -44,7 +44,7 @@ public class MyFunction {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                String url = "https://api.bilibili.com/x/space/arc/search?mid=364868516&pn=1&ps=10&index=1&order=pubdate&order_avoided=true&jsonp=jsonp";
+                String url = "https://api.bilibili.com/x/space/arc/search?mid=2200736&pn=1&ps=10&index=1&order=pubdate&order_avoided=true&jsonp=jsonp";
                 OkHttpClient client = new OkHttpClient();
                 final Request request = new Request.Builder()
                         .header("user-agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.35")
@@ -171,6 +171,17 @@ public class MyFunction {
                 break;
         }
         return res;
+    }
+
+    // 获取videoList中符合搜索结果的video（前提是已经从网络获取了全部视频信息,否则可能会报错）-> 简单的关键词过滤
+    public static List<Video> searchFilter_videoList(String key){
+        List<Video> filterVideoList = new ArrayList<>();
+        for(Video v: videoList){
+            if(v.title.contains(key)){
+                filterVideoList.add(v);
+            }
+        }
+        return filterVideoList;
     }
 
 }

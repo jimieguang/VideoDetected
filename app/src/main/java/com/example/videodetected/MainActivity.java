@@ -111,6 +111,16 @@ public class MainActivity extends AppCompatActivity {
     }
 
     private void set_sides_click_listener(DrawerLayout drawer) {
+        // 主页
+        View menu_index = findViewById(R.id.menu_index);
+        menu_index.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // 关闭侧边栏
+                drawer.closeDrawers();
+            }
+        });
+        // 排序
         View menu_sort = findViewById(R.id.menu_sort);
         menu_sort.setOnClickListener(new View.OnClickListener() {
             @Override
@@ -142,6 +152,16 @@ public class MainActivity extends AppCompatActivity {
                     }
                 });
                 builder.show();
+            }
+        });
+        // 搜索
+        View menu_search = findViewById(R.id.menu_search);
+        menu_search.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // 关闭侧边栏
+                drawer.closeDrawers();
+
             }
         });
     }
