@@ -6,7 +6,6 @@ import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Message;
-import android.os.Parcelable;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -17,18 +16,27 @@ import java.io.InputStream;
 import java.io.Serializable;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.text.ParseException;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
 import okhttp3.Request;
 import okhttp3.Response;
 
-public class HttpFunc {
+public class MyFunction {
     static List<Video> videoList;
     static Bitmap myBitmap;
     static List<Bitmap> bitmapList = new ArrayList<>();
+    // 用map关联图片链接与bitmap信息，更方便从缓存中读取（且不易出错）
+    static Map<String, Integer> map = new HashMap<>();
 
 
     public static List<Video> get_video_info(Handler myHandler){
@@ -92,12 +100,14 @@ public class HttpFunc {
                         bitmapList.add(null);
                     }
                     bitmapList.set(position,myBitmap);
+                    // 将该图片网址与bitmapList序号关联起来
+                    map.put(videoList.get(position).pic_src,position);
                     // 给MainAdapter传递myBitmap数据并使其刷新特定元素（获取完图片了）
                     Message msg = Message.obtain();
                     msg.what = 1;
-                    Bundle bundle = new Bundle();
-                    bundle.putParcelable("myBitmap", (Parcelable) myBitmap);
-                    msg.setData(bundle);
+//                    Bundle bundle = new Bundle();
+//                    bundle.putParcelable("myBitmap", (Parcelable) myBitmap);
+//                    msg.setData(bundle);
                     msg.arg1 = position;
                     myHandler.sendMessage(msg);
                 } catch (IOException e) {
@@ -108,7 +118,59 @@ public class HttpFunc {
         return myBitmap;
     }
     // 从缓存获取图片信息
-    public static Bitmap getBitmapFromCache(int position){
-        return bitmapList.get(position);
+    public static Bitmap getBitmapFromCache(String pic_src){
+        int index = map.get(pic_src);
+        return bitmapList.get(index);
     }
+
+    // 对videoList排序(无返回值，sort似乎直接操作了主页面的List)
+    public static List<Video> sort_videoList_by(List<Video> videoList,String sort_by){
+        Collections.sort(videoList, new Comparator<Video>() {
+            @Override
+            public int compare(Video o1, Video o2) {
+                int diff = 0;
+                try {
+                    diff = func_sort_by(o1,o2,sort_by);
+                } catch (ParseException e) {
+                    e.printStackTrace();
+                }
+                // diff>0 -> 1;diff<0 -> -1; else 0
+//                return Integer.compare(diff, 0);
+                // 相反
+                return Integer.compare(0, diff);
+            }
+        });
+        return null;
+    }
+    // 设置特定的比较方法
+    static int func_sort_by(Video o1,Video o2,String sort_by) throws ParseException {
+        int res = 0;
+        switch(sort_by){
+            case "upload_time":
+                // 字符串转时间戳再比较
+                SimpleDateFormat simpleDateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+                Date date1 = simpleDateFormat.parse(o1.upload_time);
+                Date date2 = simpleDateFormat.parse(o2.upload_time);
+                long ts1 = date1.getTime();
+                long ts2 = date2.getTime();
+                res = (int)( ts1 - ts2 );
+                break;
+            case "duration":
+                // 划分“分秒”再进行比较
+                String[] split1 = o1.duration.split(":",2);
+                String[] split2 = o2.duration.split(":",2);
+                int duration1 = Integer.parseInt(split1[0])*60+Integer.parseInt(split1[1]);
+                int duration2 = Integer.parseInt(split2[0])*60+Integer.parseInt(split2[1]);
+                res = duration1 - duration2;
+                break;
+            case "play_num":
+                res = o1.play_num - o2.play_num;
+                break;
+            case "bullet_num":
+                res = o1.bullet_num - o2.bullet_num;
+                break;
+        }
+        return res;
+    }
+
 }

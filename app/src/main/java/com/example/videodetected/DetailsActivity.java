@@ -46,7 +46,7 @@ public class DetailsActivity extends SlidingActivity {
     }
     void init_header(Video video){
         ImageView detail_image = findViewById(R.id.detail_image);
-        Bitmap bitmap = HttpFunc.getBitmapFromCache(position);
+        Bitmap bitmap = MyFunction.getBitmapFromCache(Intent_video.pic_src);
         // 设置bimap图片
         detail_image.setImageBitmap(bitmap);
 

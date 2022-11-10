@@ -23,21 +23,22 @@ import java.util.List;
 public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder> {
     private List<Video> videoList;
     private ViewGroup parent;
-    public Bitmap bitmap = null;
-    public List<Bitmap> bitmapList;
+    public List<Boolean> isDownloadList;
 
     public MainAdapter(List<Video> videoList) {
         this.videoList = videoList;
-        this.bitmapList = new ArrayList<>();
+        this.isDownloadList = new ArrayList<>();
     }
 
+    // 响应图片下载完成事件
     Handler myHandler = new Handler(Looper.getMainLooper()){
         @Override
         public void handleMessage(Message msg){
             switch (msg.what){
                 case 1:
                     int position = msg.arg1;
-                    bitmapList.set(position,msg.getData().getParcelable("myBitmap"));
+                    isDownloadList.set(position,true);
+//                    bitmapList.set(position,msg.getData().getParcelable("myBitmap"));
                     notifyItemChanged(position);
                     break;
                 default:
@@ -58,22 +59,21 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder
     @Override
     public void onBindViewHolder(@NonNull MainViewHolder holder, int position) {
         // 此处将Video类中的属性关联到本类中（即充当媒介将layout与Video关联）
-        // 值得注意的是 Video类中的image仅记录图像id，需要通过setImageResource方法调用
+        // 值得注意的是 Video类中的image仅记录图像src，需要通过HttpFunc.getBitmapFromUrl方法下载网络资源（bimap返回）
         // 且info属性并不是直接从Video中拿到的，需要稍微处理下
         // item是每个元素的整体页面布局
         Video video = videoList.get(position);
-        // 待议
-        while(bitmapList.size()<videoList.size()){
-            bitmapList.add(null);
+        // 拓展isDownLoadList长度并在此处记录图片是否已获取（如果获取则从func的缓存中读取图片）
+        while(isDownloadList.size()<videoList.size()){
+            isDownloadList.add(false);
         }
-        if(bitmapList.get(position)!=null){
-            holder.image.setImageBitmap(bitmapList.get(position));
+        if(isDownloadList.get(position)){
+            Bitmap bitmap = MyFunction.getBitmapFromCache(video.pic_src);
+            holder.image.setImageBitmap(bitmap);
         }else{
-            HttpFunc.getBitmapFromUrl(video.pic_src,myHandler,position);
+            MyFunction.getBitmapFromUrl(video.pic_src,myHandler,position);
         }
-//        bitmap = getBitmapFromUrl(video.pic_id);
-//        holder.image.setImageBitmap(bitmap);
-        //
+
         holder.upload_time.setText(video.upload_time);
         holder.duration.setText(video.duration);
         holder.title.setText(video.title);

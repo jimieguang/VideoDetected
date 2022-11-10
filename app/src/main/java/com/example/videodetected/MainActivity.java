@@ -1,5 +1,6 @@
 package com.example.videodetected;
 
+import android.content.DialogInterface;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
@@ -16,6 +17,7 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.core.view.GravityCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
@@ -29,6 +31,8 @@ import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
     public static ActivityResultLauncher launcher;
+    public static List<Video> videoList;
+    private MainAdapter mainAdapter;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -44,13 +48,15 @@ public class MainActivity extends AppCompatActivity {
         // 进入主页
         setContentView(R.layout.main_activity);
 
-        // 点击按钮打开侧边栏
+        // 点击按钮打开侧边栏（设置事件）
         final ImageView menu_main = findViewById(R.id.menu_main);
         menu_main.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 DrawerLayout drawer = findViewById(R.id.drawer_layout);
                 drawer.openDrawer(GravityCompat.START);
+                // 设置侧边栏点击事件(menu元素在侧边栏打开之前是不加载的，因此要在这里设置点击事件）
+                set_sides_click_listener(drawer);
             }
         });
 
@@ -60,16 +66,17 @@ public class MainActivity extends AppCompatActivity {
         //页面主题元素 加载/渲染（recyclerview)
         RecyclerView recyclerView = findViewById(R.id.videolist_recycler);
 
-        List<Video> videoList = new ArrayList<>();
+        videoList = new ArrayList<>();
 
 
         // 设置LayoutManager，不设置无法显示（似乎是为了样式，但样式应该已经在Adapter中绑定了，不甚理解，待议）
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(linearLayoutManager);
         // 注入Adapter配置
-        MainAdapter mainAdapter = new MainAdapter(videoList);
+        mainAdapter = new MainAdapter(videoList);
         recyclerView.setAdapter(mainAdapter);
 
+        // 接收视频信息获取完成事件（json）
         Handler myHandler = new Handler(Looper.getMainLooper()){
             @Override
             public void handleMessage(Message msg){
@@ -83,11 +90,10 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         };
-        HttpFunc.get_video_info(myHandler);
+        MyFunction.get_video_info(myHandler);
 
         // 设置监听器以拿到DetailActivity返回的数据（代替StartActivityForResult）
         // 值得注意的是，该监听器仅能在OnCreate时创建，因此带来了不便（因为触发函数写在Adapter）
-//        List<Video> finalVideoList = videoList;
         launcher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
             @Override
             public void onActivityResult(ActivityResult result) {
@@ -102,6 +108,42 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+    }
+
+    private void set_sides_click_listener(DrawerLayout drawer) {
+        View menu_sort = findViewById(R.id.menu_sort);
+        menu_sort.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                // 关闭侧边栏
+                drawer.closeDrawers();
+                final String[] choiceItems = new String[]{"上传日期","时长","播放量","弹幕量"};
+                AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+                builder.setTitle("排序依据");
+                builder.setIcon(R.mipmap.ic_launcher);
+                builder.setItems(choiceItems, new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        switch(which){
+                            case 0:
+                                MyFunction.sort_videoList_by(videoList,"upload_time");
+                                break;
+                            case 1:
+                                MyFunction.sort_videoList_by(videoList,"duration");
+                                break;
+                            case 2:
+                                MyFunction.sort_videoList_by(videoList,"play_num");
+                                break;
+                            case 3:
+                                MyFunction.sort_videoList_by(videoList,"bullet_num");
+                                break;
+                        }
+                        mainAdapter.notifyDataSetChanged();
+                    }
+                });
+                builder.show();
+            }
+        });
     }
 
     // 设置侧边栏日期（需要从数字转为英文）
