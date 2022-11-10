@@ -1,7 +1,6 @@
 package com.example.videodetected;
 
 import android.widget.EditText;
-import android.widget.ImageView;
 
 import org.json.JSONException;
 import org.json.JSONObject;
@@ -19,20 +18,20 @@ public class Video implements Serializable {
     public String duration;
     public int play_num;
     public int bullet_num;
-    public String pic_id;
+    public String pic_src;
 
-    public Video(String title, String owner, String upload_time, String description, String duration,String pic_id, int play_num, int bullet_num) {
+    public Video(String title, String owner, String upload_time, String description, String duration, String pic_src, int play_num, int bullet_num) {
         this.title = title;
         this.owner = owner;
         this.upload_time = upload_time;
         this.description = description;
         this.duration = duration;
-        this.pic_id = pic_id;
+        this.pic_src = pic_src;
         this.play_num = play_num;
         this.bullet_num = bullet_num;
     }
 
-    public Video(List<EditText> editTextList, String pic_id){
+    public Video(List<EditText> editTextList, String pic_src){
         // 注意顺序是严格按照Adapter中定义的，不能随意改变
         this.title = String.valueOf(editTextList.get(0).getText());
         this.owner = String.valueOf(editTextList.get(1).getText());
@@ -51,7 +50,7 @@ public class Video implements Serializable {
         }
         this.description = String.valueOf(editTextList.get(6).getText());
 
-        this.pic_id = pic_id;
+        this.pic_src = pic_src;
     }
 
     public Video(JSONObject v) throws JSONException {
@@ -61,12 +60,12 @@ public class Video implements Serializable {
         this.duration = (String) v.get("length");
         this.play_num = (int) v.get("play");
         this.bullet_num = (int) v.get("video_review");
-        // upload_time 需要由时间戳转为字符串
+        // upload_time 需要由时间戳转为字符串(注意要转换为毫秒级时间戳）
         SimpleDateFormat sdf = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-        long l = Long.parseLong((String) v.get("created"));
+        long l = Long.parseLong(v.getString("created")+"000");
         this.upload_time = sdf.format(l);
-        // 图片需要从指定链接下载完返回id
-        this.pic_id = pic_id;
+        // 图片以字符串形式仅保留下载链接（http）
+        this.pic_src = (String) v.get("pic");
 
     }
 }

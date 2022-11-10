@@ -3,6 +3,7 @@ package com.example.videodetected;
 import androidx.core.content.ContextCompat;
 
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
 import android.view.View;
 import android.view.inputmethod.InputMethodManager;
@@ -44,8 +45,11 @@ public class DetailsActivity extends SlidingActivity {
 
     }
     void init_header(Video video){
-        ImageView video_image = findViewById(R.id.detail_image);
-        video_image.setImageResource(video.pic_id);
+        ImageView detail_image = findViewById(R.id.detail_image);
+        Bitmap bitmap = HttpFunc.getBitmapFromCache(position);
+        // 设置bimap图片
+        detail_image.setImageBitmap(bitmap);
+
     }
     void init_content(Video video){
         // 获取EditText元素并将其加入list以待之后使用
@@ -120,7 +124,7 @@ public class DetailsActivity extends SlidingActivity {
         // 将数据存到数据库（待议）
 
         // 构建新Video类
-        Video new_video = new Video(editTextList,Intent_video.pic_id);
+        Video new_video = new Video(editTextList,Intent_video.pic_src);
         // 返回保存消息，申请刷新数据
         Intent i = new Intent();
         Bundle bundle = new Bundle();

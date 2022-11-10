@@ -2,28 +2,49 @@ package com.example.videodetected;
 
 import android.content.Context;
 import android.content.Intent;
+import android.graphics.Bitmap;
 import android.os.Bundle;
-import android.telecom.Call;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
 import android.widget.ImageView;
 import android.widget.TextView;
-import android.widget.Toast;
 
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
+import java.util.ArrayList;
 import java.util.List;
 
 // Adapter创建目的是“联通”layout与RecyclerView（解耦的一部分 ps：虽然我感觉变得更复杂了）
 public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder> {
     private List<Video> videoList;
     private ViewGroup parent;
+    public Bitmap bitmap = null;
+    public List<Bitmap> bitmapList;
 
     public MainAdapter(List<Video> videoList) {
         this.videoList = videoList;
+        this.bitmapList = new ArrayList<>();
     }
+
+    Handler myHandler = new Handler(Looper.getMainLooper()){
+        @Override
+        public void handleMessage(Message msg){
+            switch (msg.what){
+                case 1:
+                    int position = msg.arg1;
+                    bitmapList.set(position,msg.getData().getParcelable("myBitmap"));
+                    notifyItemChanged(position);
+                    break;
+                default:
+                    break;
+            }
+        }
+    };
 
     @NonNull
     @Override
@@ -41,7 +62,18 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder
         // 且info属性并不是直接从Video中拿到的，需要稍微处理下
         // item是每个元素的整体页面布局
         Video video = videoList.get(position);
-        holder.image.setImageResource(video.pic_id);
+        // 待议
+        while(bitmapList.size()<videoList.size()){
+            bitmapList.add(null);
+        }
+        if(bitmapList.get(position)!=null){
+            holder.image.setImageBitmap(bitmapList.get(position));
+        }else{
+            HttpFunc.getBitmapFromUrl(video.pic_src,myHandler,position);
+        }
+//        bitmap = getBitmapFromUrl(video.pic_id);
+//        holder.image.setImageBitmap(bitmap);
+        //
         holder.upload_time.setText(video.upload_time);
         holder.duration.setText(video.duration);
         holder.title.setText(video.title);
@@ -113,5 +145,6 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder
             this.info = itemView.findViewById(R.id.video_info);
         }
     }
+
 }
 

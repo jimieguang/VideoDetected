@@ -3,11 +3,13 @@ package com.example.videodetected;
 import android.content.Intent;
 import android.graphics.Color;
 import android.os.Bundle;
+import android.os.Handler;
+import android.os.Looper;
+import android.os.Message;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResult;
@@ -22,6 +24,7 @@ import androidx.recyclerview.widget.RecyclerView;
 
 import java.util.ArrayList;
 import java.util.Calendar;
+import java.util.Collection;
 import java.util.List;
 
 public class MainActivity extends AppCompatActivity {
@@ -30,7 +33,6 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        new HttpJson().get_info();
         // 去除默认标题栏
         supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
         // 状态栏改为全透明
@@ -57,18 +59,10 @@ public class MainActivity extends AppCompatActivity {
 
         //页面主题元素 加载/渲染（recyclerview)
         RecyclerView recyclerView = findViewById(R.id.videolist_recycler);
+
         List<Video> videoList = new ArrayList<>();
-        Video video1 = new Video("这是一段尽可能要长一点的标题文字【测试】","测试用户1","3","des1","03:45","",0,0);
-        Video video2 = new Video("中文测试文本2","测试用户2","3","des2","03:45","",0,0);
-        Video video3 = new Video("中文测试文本3","测试用户3","3","des3","03:45","",0,0);
-        videoList.add(video1);
-        videoList.add(video2);
-        videoList.add(video3);
-        int i = 0;
-        while(i<20){
-            i++;
-            videoList.add(video1);
-        }
+
+
         // 设置LayoutManager，不设置无法显示（似乎是为了样式，但样式应该已经在Adapter中绑定了，不甚理解，待议）
         LinearLayoutManager linearLayoutManager = new LinearLayoutManager(this);
         recyclerView.setLayoutManager(linearLayoutManager);
@@ -76,8 +70,24 @@ public class MainActivity extends AppCompatActivity {
         MainAdapter mainAdapter = new MainAdapter(videoList);
         recyclerView.setAdapter(mainAdapter);
 
+        Handler myHandler = new Handler(Looper.getMainLooper()){
+            @Override
+            public void handleMessage(Message msg){
+                switch (msg.what){
+                    case 1:
+                        videoList.addAll((Collection<? extends Video>) msg.getData().getSerializable("videoList"));
+                        mainAdapter.notifyDataSetChanged();
+                        break;
+                    default:
+                        break;
+                }
+            }
+        };
+        HttpFunc.get_video_info(myHandler);
+
         // 设置监听器以拿到DetailActivity返回的数据（代替StartActivityForResult）
         // 值得注意的是，该监听器仅能在OnCreate时创建，因此带来了不便（因为触发函数写在Adapter）
+//        List<Video> finalVideoList = videoList;
         launcher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
             @Override
             public void onActivityResult(ActivityResult result) {
