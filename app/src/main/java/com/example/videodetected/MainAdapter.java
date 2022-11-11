@@ -23,6 +23,7 @@ import java.util.List;
 public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder> {
     private List<Video> videoList;
     private ViewGroup parent;
+    private Bitmap bitmap;
     public List<Boolean> isDownloadList;
 
     public MainAdapter(List<Video> videoList) {
@@ -37,7 +38,7 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder
             switch (msg.what){
                 case 1:
                     int position = msg.arg1;
-                    isDownloadList.set(position,true);
+//                    isDownloadList.set(position,true);
 //                    bitmapList.set(position,msg.getData().getParcelable("myBitmap"));
                     notifyItemChanged(position);
                     break;
@@ -64,11 +65,17 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder
         // item是每个元素的整体页面布局
         Video video = videoList.get(position);
         // 拓展isDownLoadList长度并在此处记录图片是否已获取（如果获取则从func的缓存中读取图片）
-        while(isDownloadList.size()<videoList.size()){
-            isDownloadList.add(false);
-        }
-        if(isDownloadList.get(position)){
-            Bitmap bitmap = MyFunction.getBitmapFromCache(video.pic_src);
+//        while(isDownloadList.size()<videoList.size()){
+//            isDownloadList.add(false);
+//        }
+//        if(isDownloadList.get(position)){
+//            Bitmap bitmap = MyFunction.getBitmapFromCache(video.pic_src);
+//            holder.image.setImageBitmap(bitmap);
+//        }else{
+//            MyFunction.getBitmapFromUrl(video.pic_src,myHandler,position);
+//        }
+        bitmap = MyFunction.getBitmapFromCache(video.pic_src);
+        if (bitmap!=null){
             holder.image.setImageBitmap(bitmap);
         }else{
             MyFunction.getBitmapFromUrl(video.pic_src,myHandler,position);

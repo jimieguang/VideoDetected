@@ -4,6 +4,7 @@ package com.example.videodetected;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
+import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
 
@@ -11,11 +12,16 @@ import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
+import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
+import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
@@ -34,9 +40,9 @@ import okhttp3.Response;
 public class MyFunction {
     static List<Video> videoList;
     static Bitmap myBitmap;
-    static List<Bitmap> bitmapList = new ArrayList<>();
-    // 用map关联图片链接与bitmap信息，更方便从缓存中读取（且不易出错）
-    static Map<String, Integer> map = new HashMap<>();
+//    static List<Bitmap> bitmapList = new ArrayList<>();
+//    // 用map关联图片链接与bitmap信息，更方便从缓存中读取（且不易出错）
+//    static Map<String, Integer> map = new HashMap<>();
 
 
     public static List<Video> get_video_info(Handler myHandler){
@@ -44,7 +50,7 @@ public class MyFunction {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                String url = "https://api.bilibili.com/x/space/arc/search?mid=2200736&pn=1&ps=10&index=1&order=pubdate&order_avoided=true&jsonp=jsonp";
+                String url = "https://api.bilibili.com/x/space/arc/search?mid=123372&pn=1&ps=10&index=1&order=pubdate&order_avoided=true&jsonp=jsonp";
                 OkHttpClient client = new OkHttpClient();
                 final Request request = new Request.Builder()
                         .header("user-agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.35")
@@ -95,13 +101,16 @@ public class MyFunction {
                     connection.connect();
                     InputStream input = connection.getInputStream();
                     myBitmap = BitmapFactory.decodeStream(input);
-                    // 将结果储存起来(先拓展）
-                    while(bitmapList.size()<=position){
-                        bitmapList.add(null);
-                    }
-                    bitmapList.set(position,myBitmap);
-                    // 将该图片网址与bitmapList序号关联起来
-                    map.put(videoList.get(position).pic_src,position);
+                    // 将图像保存在本地，文件名为video网址信息
+                    saveBitmap(myBitmap,src);
+
+//                    // 将结果储存起来(先拓展）
+//                    while(bitmapList.size()<=position){
+//                        bitmapList.add(null);
+//                    }
+//                    bitmapList.set(position,myBitmap);
+//                    // 将该图片网址与bitmapList序号关联起来
+//                    map.put(videoList.get(position).pic_src,position);
                     // 给MainAdapter传递myBitmap数据并使其刷新特定元素（获取完图片了）
                     Message msg = Message.obtain();
                     msg.what = 1;
@@ -117,10 +126,36 @@ public class MyFunction {
         }).start();
         return myBitmap;
     }
-    // 从缓存获取图片信息
-    public static Bitmap getBitmapFromCache(String pic_src){
-        int index = map.get(pic_src);
-        return bitmapList.get(index);
+
+    private static void saveBitmap(Bitmap myBitmap,String src) {
+        String path = Environment.getExternalStorageDirectory().getPath() + "/Pictures/VideoDetect";
+        File file=new File(path);
+        FileOutputStream fileOutputStream=null;
+        //文件夹不存在，则创建它
+        if(!file.exists()){
+            file.mkdir();
+        }
+        try {
+            fileOutputStream=new FileOutputStream(path+"/"+md5(src)+".png");
+            myBitmap.compress(Bitmap.CompressFormat.JPEG, 80,fileOutputStream);
+            fileOutputStream.flush();
+            fileOutputStream.close();
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+    }
+
+    // 从本地缓存获取图片信息
+    public static Bitmap getBitmapFromCache(String src){
+        String dir_path = Environment.getExternalStorageDirectory().getPath() + "/Pictures/VideoDetect/";
+        String pic_path = dir_path + md5(src) + ".png";
+        // 找不到本地图片则返回null
+        try{
+            Bitmap bitmap = BitmapFactory.decodeFile(pic_path);
+            return bitmap;
+        } catch (Exception e){
+            return null;
+        }
     }
 
     // 对videoList排序(无返回值，sort似乎直接操作了主页面的List)
@@ -184,4 +219,20 @@ public class MyFunction {
         return filterVideoList;
     }
 
+
+    // 对src进行md5加密（主要是为了保存图片）
+    public static String md5(String src){
+        try {
+            MessageDigest m = MessageDigest.getInstance("MD5");
+            m.update(src.getBytes("UTF8"));
+            byte[] s = m.digest();
+            src = "";
+            for (byte b : s) {
+                src += Integer.toHexString((0x000000ff & b) | 0xffffff00).substring(6);
+            }
+        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+            e.printStackTrace();
+        }
+        return src;
+    }
 }
