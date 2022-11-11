@@ -1,12 +1,16 @@
 package com.example.videodetected;
 
 
+import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+
+import androidx.preference.Preference;
+import androidx.preference.PreferenceManager;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -39,12 +43,13 @@ public class MyFunction {
     static List<Video> videoList;
     static Bitmap myBitmap;
 
-    public static void get_video_info(Handler myHandler){
+    public static void get_video_info(Handler myHandler,String uid,String contain,String from){
         videoList = new ArrayList<>();
+
         new Thread(new Runnable() {
             @Override
             public void run() {
-                String url = "https://api.bilibili.com/x/space/arc/search?mid=123372&pn=1&ps=10&index=1&order=pubdate&order_avoided=true&jsonp=jsonp";
+                String url = String.format("https://api.bilibili.com/x/space/arc/search?mid=%s&pn=%s&ps=%s&index=1&order=pubdate&order_avoided=true&jsonp=jsonp",uid,from,contain);
                 OkHttpClient client = new OkHttpClient();
                 final Request request = new Request.Builder()
                         .header("user-agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.35")

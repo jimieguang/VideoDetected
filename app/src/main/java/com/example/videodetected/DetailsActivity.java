@@ -93,9 +93,10 @@ public class DetailsActivity extends SlidingActivity {
             editText.setFocusable(true);
             editText.setFocusableInTouchMode(true);
         }
-        // 定位一个可编辑元素（title），并将光标置于最后
+        // 定位一个可编辑元素（title），并将选择光标置于最后
         EditText title = findViewById(R.id.detail_title);
-        title.requestFocus(title.getText().length());
+        title.requestFocus();
+        title.setSelection(title.getText().length());
     }
     // 设置保存图标与响应事件
     void setSaveFab(){

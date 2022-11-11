@@ -1,11 +1,16 @@
 package com.example.videodetected;
 
 import android.os.Bundle;
+import android.text.InputType;
 import android.view.MenuItem;
 import android.view.View;
+import android.widget.EditText;
 
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
+
+import androidx.preference.EditTextPreference;
 import androidx.preference.PreferenceFragmentCompat;
 
 public class SettingsActivity extends AppCompatActivity {
@@ -44,6 +49,22 @@ public class SettingsActivity extends AppCompatActivity {
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey);
+
+            // 设置某些控件仅可输入数字
+            EditTextPreference.OnBindEditTextListener listener = new EditTextPreference.OnBindEditTextListener() {
+                @Override
+                public void onBindEditText(@NonNull EditText editText) {
+                    editText.setInputType(InputType.TYPE_CLASS_NUMBER);
+                    editText.setSelection(editText.getText().length());
+                }
+            };
+            EditTextPreference uid = findPreference("uid");
+            EditTextPreference contain = findPreference("contain");
+            EditTextPreference from = findPreference("from");
+            uid.setOnBindEditTextListener(listener);
+            contain.setOnBindEditTextListener(listener);
+            from.setOnBindEditTextListener(listener);
         }
     }
+
 }

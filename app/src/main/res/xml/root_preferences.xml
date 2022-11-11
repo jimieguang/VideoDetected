@@ -36,7 +36,7 @@
         <EditTextPreference
             app:key="from"
             app:title="元素起始"
-            app:defaultValue="0"
+            app:defaultValue="1"
             app:useSimpleSummaryProvider="true" />
 
     </PreferenceCategory>

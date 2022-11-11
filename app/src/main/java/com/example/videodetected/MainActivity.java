@@ -1,15 +1,21 @@
 package com.example.videodetected;
 
+import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.graphics.Color;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
+import android.view.Menu;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.view.inputmethod.EditorInfo;
 import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
@@ -20,8 +26,12 @@ import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
+import androidx.appcompat.widget.SearchView;
+import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
+import androidx.core.view.MenuItemCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
+import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 
@@ -36,11 +46,12 @@ public class MainActivity extends AppCompatActivity {
     private MainAdapter mainAdapter;
     private Handler myHandler;
 
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         // 去除默认标题栏
-        supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
+//        supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
         // 状态栏改为全透明
         Window window = getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
@@ -49,6 +60,13 @@ public class MainActivity extends AppCompatActivity {
         window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         // 进入主页
         setContentView(R.layout.main_activity);
+
+        // 设置toolbar（原先的fitsSystemWindows方式会导致软键盘挤压布局，因此改成此方式）
+        Toolbar mToolbar = (Toolbar) findViewById(R.id.main_toolbar);
+        setSupportActionBar(mToolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+        }
 
         // 点击按钮打开侧边栏（设置事件）
         final ImageView menu_main = findViewById(R.id.menu_main);
@@ -62,6 +80,14 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+        // 获取用户设置
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String name = preferences.getString("name","未设置");
+        String uid = preferences.getString("uid","0");
+        String contain = preferences.getString("contain","1");
+        String from = preferences.getString("from","1");
+
+
         // 动态设置侧边栏日期显示
         set_dateinfo();
 
@@ -70,7 +96,10 @@ public class MainActivity extends AppCompatActivity {
         flush_button.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
-                MyFunction.get_video_info(myHandler);
+                String uid = preferences.getString("uid","0");
+                String contain = preferences.getString("contain","1");
+                String from = preferences.getString("from","1");
+                MyFunction.get_video_info(myHandler,uid,contain,from);
             }
         });
 
@@ -102,7 +131,7 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         };
-        MyFunction.get_video_info(myHandler);
+        MyFunction.get_video_info(myHandler,uid,contain,from);
 
 
         // 设置监听器以拿到DetailActivity返回的数据（代替StartActivityForResult）
@@ -175,19 +204,44 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 // 关闭侧边栏
                 drawer.closeDrawers();
-                final EditText search=new EditText(v.getContext());
+                Dialog dialog = new Dialog(v.getContext());
+
+                // searchView相关设置
+                SearchView mSearchView = new SearchView(v.getContext());
+                mSearchView.setIconifiedByDefault(false);//搜索图标是否显示在搜索框内
+                mSearchView.setSubmitButtonEnabled(false);//设置搜索框展开时是否显示提交按钮，可不显示
+                mSearchView.setImeOptions(EditorInfo.IME_ACTION_SEARCH);//让键盘的回车键设置成搜索
+                mSearchView.setIconified(false);//搜索框是否展开，false表示展开
+                mSearchView.setQueryHint("请输入关键字");//设置提示词
+                // 触发事件
+                Dialog finalDialog = dialog;
+                mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                    // 提交时关闭dialog
+                    public boolean onQueryTextSubmit(String query) {
+                        finalDialog.dismiss();
+                        return false;
+                    }
+                    // 输入框变动时更新主页面数据
+                    @Override
+                    public boolean onQueryTextChange(String newText) {
+                        videoList.clear();
+                        videoList.addAll(MyFunction.searchFilter_videoList(newText));
+                        mainAdapter.notifyDataSetChanged();
+                        return false;
+                    }
+                });
+//                AlertDialog相关设置
                 AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
-                builder.setTitle("关键词");
+                builder.setTitle("检索");
                 builder.setIcon(R.mipmap.ic_launcher);
-                builder.setView(search);
+                builder.setView(mSearchView);
                 builder.setPositiveButton("搜索", new DialogInterface.OnClickListener() {
                     @Override
                     public void onClick(DialogInterface dialog, int which) {
-                        MyFunction.searchFilter_videoList(search.getText().toString());
-//                        mainAdapter.notifyDataSetChanged();
+                        dialog.dismiss();
                     }
                 });
-                builder.show();
+                dialog = builder.show();
             }
         });
         // 设置
