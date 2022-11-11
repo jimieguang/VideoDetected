@@ -1,0 +1,44 @@
+<PreferenceScreen xmlns:app="http://schemas.android.com/apk/res-auto">
+
+    <PreferenceCategory app:title="基本">
+        <EditTextPreference
+            app:key="name"
+            app:title="昵称"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:key="uid"
+            app:title="UID"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+    <PreferenceCategory app:title="高级">
+
+        <SwitchPreferenceCompat
+            app:key="sync"
+            app:title="定时刷新" />
+
+        <ListPreference
+            app:key="sync_time"
+            app:dependency="sync"
+            app:entries="@array/sync_time_entries"
+            app:entryValues="@array/sync_time_values"
+            app:title="刷新间隔"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:key="contain"
+            app:title="主页容量"
+            app:defaultValue="5"
+            app:useSimpleSummaryProvider="true" />
+
+        <EditTextPreference
+            app:key="from"
+            app:title="元素起始"
+            app:defaultValue="0"
+            app:useSimpleSummaryProvider="true" />
+
+    </PreferenceCategory>
+
+</PreferenceScreen>

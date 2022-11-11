@@ -10,6 +10,7 @@ import android.os.Message;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -33,6 +34,7 @@ public class MainActivity extends AppCompatActivity {
     public static ActivityResultLauncher launcher;
     public static List<Video> videoList;
     private MainAdapter mainAdapter;
+    private Handler myHandler;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -63,6 +65,15 @@ public class MainActivity extends AppCompatActivity {
         // 动态设置侧边栏日期显示
         set_dateinfo();
 
+        // 设置刷新按钮
+        View flush_button = findViewById(R.id.flush_button);
+        flush_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MyFunction.get_video_info(myHandler);
+            }
+        });
+
         //页面主题元素 加载/渲染（recyclerview)
         RecyclerView recyclerView = findViewById(R.id.videolist_recycler);
 
@@ -77,11 +88,12 @@ public class MainActivity extends AppCompatActivity {
         recyclerView.setAdapter(mainAdapter);
 
         // 接收视频信息获取完成事件（json）
-        Handler myHandler = new Handler(Looper.getMainLooper()){
+        myHandler = new Handler(Looper.getMainLooper()){
             @Override
             public void handleMessage(Message msg){
                 switch (msg.what){
                     case 1:
+                        videoList.clear();
                         videoList.addAll((Collection<? extends Video>) msg.getData().getSerializable("videoList"));
                         mainAdapter.notifyDataSetChanged();
                         break;
@@ -92,6 +104,7 @@ public class MainActivity extends AppCompatActivity {
         };
         MyFunction.get_video_info(myHandler);
 
+
         // 设置监听器以拿到DetailActivity返回的数据（代替StartActivityForResult）
         // 值得注意的是，该监听器仅能在OnCreate时创建，因此带来了不便（因为触发函数写在Adapter）
         launcher = registerForActivityResult(new ActivityResultContracts.StartActivityForResult(), new ActivityResultCallback<ActivityResult>() {
@@ -100,6 +113,7 @@ public class MainActivity extends AppCompatActivity {
                 if (result.getResultCode() == RESULT_OK) {
                     // 局部刷新数据
                     Intent intent_receive = result.getData();
+                    assert intent_receive != null;
                     Video new_video = (Video) intent_receive.getSerializableExtra("new_video");
                     int position = intent_receive.getIntExtra("position",0);
                     videoList.set(position,new_video);
@@ -161,7 +175,28 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 // 关闭侧边栏
                 drawer.closeDrawers();
-
+                final EditText search=new EditText(v.getContext());
+                AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
+                builder.setTitle("关键词");
+                builder.setIcon(R.mipmap.ic_launcher);
+                builder.setView(search);
+                builder.setPositiveButton("搜索", new DialogInterface.OnClickListener() {
+                    @Override
+                    public void onClick(DialogInterface dialog, int which) {
+                        MyFunction.searchFilter_videoList(search.getText().toString());
+//                        mainAdapter.notifyDataSetChanged();
+                    }
+                });
+                builder.show();
+            }
+        });
+        // 设置
+        View menu_setting = findViewById(R.id.menu_setting);
+        menu_setting.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent i = new Intent(v.getContext(),SettingsActivity.class);
+                startActivity(i);
             }
         });
     }

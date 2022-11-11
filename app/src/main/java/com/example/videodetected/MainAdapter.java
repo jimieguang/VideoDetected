@@ -21,14 +21,11 @@ import java.util.List;
 
 // Adapter创建目的是“联通”layout与RecyclerView（解耦的一部分 ps：虽然我感觉变得更复杂了）
 public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder> {
-    private List<Video> videoList;
+    private final List<Video> videoList;
     private ViewGroup parent;
-    private Bitmap bitmap;
-    public List<Boolean> isDownloadList;
 
     public MainAdapter(List<Video> videoList) {
         this.videoList = videoList;
-        this.isDownloadList = new ArrayList<>();
     }
 
     // 响应图片下载完成事件
@@ -38,8 +35,6 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder
             switch (msg.what){
                 case 1:
                     int position = msg.arg1;
-//                    isDownloadList.set(position,true);
-//                    bitmapList.set(position,msg.getData().getParcelable("myBitmap"));
                     notifyItemChanged(position);
                     break;
                 default:
@@ -60,22 +55,13 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder
     @Override
     public void onBindViewHolder(@NonNull MainViewHolder holder, int position) {
         // 此处将Video类中的属性关联到本类中（即充当媒介将layout与Video关联）
-        // 值得注意的是 Video类中的image仅记录图像src，需要通过HttpFunc.getBitmapFromUrl方法下载网络资源（bimap返回）
+        // 值得注意的是 Video类中的image仅记录图像src，需要通过HttpFunc.getBitmapFromUrl方法下载网络资源（bitmap返回）
         // 且info属性并不是直接从Video中拿到的，需要稍微处理下
         // item是每个元素的整体页面布局
         Video video = videoList.get(position);
-        // 拓展isDownLoadList长度并在此处记录图片是否已获取（如果获取则从func的缓存中读取图片）
-//        while(isDownloadList.size()<videoList.size()){
-//            isDownloadList.add(false);
-//        }
-//        if(isDownloadList.get(position)){
-//            Bitmap bitmap = MyFunction.getBitmapFromCache(video.pic_src);
-//            holder.image.setImageBitmap(bitmap);
-//        }else{
-//            MyFunction.getBitmapFromUrl(video.pic_src,myHandler,position);
-//        }
-        bitmap = MyFunction.getBitmapFromCache(video.pic_src);
-        if (bitmap!=null){
+        // 试图从本地缓存读取图片，如果不存在（返回null）则从互联网下载
+        Bitmap bitmap = MyFunction.getBitmapFromCache(video.pic_src);
+        if (bitmap !=null){
             holder.image.setImageBitmap(bitmap);
         }else{
             MyFunction.getBitmapFromUrl(video.pic_src,myHandler,position);
@@ -88,7 +74,7 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder
         // 处理info字符串
         String info = Integer.toString(video.play_num) + " 播放 · "+Integer.toString(video.bullet_num)+"弹幕";
         holder.info.setText(info);
-        // 设置点击事件(跳转至详情页，是否可编辑待商榷）
+        // 设置点击事件(跳转至详情页，在该处可以编辑修改信息）
         holder.item.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
@@ -131,7 +117,7 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder
         notifyItemRemoved(position);
     }
 
-    class MainViewHolder extends RecyclerView.ViewHolder {
+    static class MainViewHolder extends RecyclerView.ViewHolder {
         View item;
         ImageView image;
         TextView upload_time;

@@ -17,9 +17,9 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.Serializable;
-import java.io.UnsupportedEncodingException;
 import java.net.HttpURLConnection;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
@@ -28,9 +28,7 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 import okhttp3.Call;
 import okhttp3.OkHttpClient;
@@ -40,12 +38,8 @@ import okhttp3.Response;
 public class MyFunction {
     static List<Video> videoList;
     static Bitmap myBitmap;
-//    static List<Bitmap> bitmapList = new ArrayList<>();
-//    // 用map关联图片链接与bitmap信息，更方便从缓存中读取（且不易出错）
-//    static Map<String, Integer> map = new HashMap<>();
 
-
-    public static List<Video> get_video_info(Handler myHandler){
+    public static void get_video_info(Handler myHandler){
         videoList = new ArrayList<>();
         new Thread(new Runnable() {
             @Override
@@ -64,7 +58,7 @@ public class MyFunction {
                     String res_string = response.body().string();
                     JSONObject res_json = new JSONObject(res_string);
                     JSONArray vlist = res_json.getJSONObject("data").getJSONObject("list").getJSONArray("vlist");
-                    videoList = Json2Videos(vlist,videoList);
+                    Json2Videos(vlist,videoList);
                 } catch (IOException | JSONException e) {
                     e.printStackTrace();
                 }
@@ -77,19 +71,19 @@ public class MyFunction {
                 myHandler.sendMessage(msg);
             }
         }).start();
-        return videoList;
     }
-    static List<Video> Json2Videos(JSONArray vlist, List<Video> videoList) throws JSONException {
+
+    // java中传递List使用的地址，因此函数内的更改会变动函数外的List值，因此无须返回值
+    static void Json2Videos(JSONArray vlist, List<Video> videoList) throws JSONException {
         for(int i=0;i<vlist.length();i++){
             JSONObject v = vlist.getJSONObject(i);
             Video video = new Video(v);
             videoList.add(video);
         }
-        return videoList;
     }
 
     // 从url获取图片信息
-    public static Bitmap getBitmapFromUrl(String src,Handler myHandler,int position){
+    public static void getBitmapFromUrl(String src, Handler myHandler, int position){
         myBitmap = null;
         new Thread(new Runnable() {
             @Override
@@ -101,22 +95,11 @@ public class MyFunction {
                     connection.connect();
                     InputStream input = connection.getInputStream();
                     myBitmap = BitmapFactory.decodeStream(input);
-                    // 将图像保存在本地，文件名为video网址信息
+                    // 将图像保存在本地，文件名为md5加密后的video网址信息
                     saveBitmap(myBitmap,src);
-
-//                    // 将结果储存起来(先拓展）
-//                    while(bitmapList.size()<=position){
-//                        bitmapList.add(null);
-//                    }
-//                    bitmapList.set(position,myBitmap);
-//                    // 将该图片网址与bitmapList序号关联起来
-//                    map.put(videoList.get(position).pic_src,position);
                     // 给MainAdapter传递myBitmap数据并使其刷新特定元素（获取完图片了）
                     Message msg = Message.obtain();
                     msg.what = 1;
-//                    Bundle bundle = new Bundle();
-//                    bundle.putParcelable("myBitmap", (Parcelable) myBitmap);
-//                    msg.setData(bundle);
                     msg.arg1 = position;
                     myHandler.sendMessage(msg);
                 } catch (IOException e) {
@@ -124,7 +107,6 @@ public class MyFunction {
                 }
             }
         }).start();
-        return myBitmap;
     }
 
     private static void saveBitmap(Bitmap myBitmap,String src) {
@@ -159,13 +141,13 @@ public class MyFunction {
     }
 
     // 对videoList排序(无返回值，sort似乎直接操作了主页面的List)
-    public static List<Video> sort_videoList_by(List<Video> videoList,String sort_by){
-        Collections.sort(videoList, new Comparator<Video>() {
+    public static void sort_videoList_by(List<Video> videoList, String sort_by){
+        videoList.sort(new Comparator<Video>() {
             @Override
             public int compare(Video o1, Video o2) {
                 int diff = 0;
                 try {
-                    diff = func_sort_by(o1,o2,sort_by);
+                    diff = func_sort_by(o1, o2, sort_by);
                 } catch (ParseException e) {
                     e.printStackTrace();
                 }
@@ -175,7 +157,6 @@ public class MyFunction {
                 return Integer.compare(0, diff);
             }
         });
-        return null;
     }
     // 设置特定的比较方法
     static int func_sort_by(Video o1,Video o2,String sort_by) throws ParseException {
@@ -224,13 +205,14 @@ public class MyFunction {
     public static String md5(String src){
         try {
             MessageDigest m = MessageDigest.getInstance("MD5");
-            m.update(src.getBytes("UTF8"));
+            m.update(src.getBytes(StandardCharsets.UTF_8));
             byte[] s = m.digest();
-            src = "";
+            StringBuilder srcBuilder = new StringBuilder();
             for (byte b : s) {
-                src += Integer.toHexString((0x000000ff & b) | 0xffffff00).substring(6);
+                srcBuilder.append(Integer.toHexString((0x000000ff & b) | 0xffffff00).substring(6));
             }
-        } catch (NoSuchAlgorithmException | UnsupportedEncodingException e) {
+            src = srcBuilder.toString();
+        } catch (NoSuchAlgorithmException e) {
             e.printStackTrace();
         }
         return src;
