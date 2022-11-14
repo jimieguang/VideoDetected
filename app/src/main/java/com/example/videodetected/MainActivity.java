@@ -5,18 +5,16 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.graphics.Color;
+import android.graphics.Rect;
+import android.net.Uri;
 import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.util.Log;
-import android.view.Menu;
-import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.TextView;
 
@@ -29,11 +27,12 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
-import androidx.core.view.MenuItemCompat;
+import androidx.core.view.ViewCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
+import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
 import java.util.ArrayList;
 import java.util.Calendar;
@@ -45,48 +44,54 @@ public class MainActivity extends AppCompatActivity {
     public static List<Video> videoList;
     private MainAdapter mainAdapter;
     private Handler myHandler;
+    private SwipeRefreshLayout swipeRefreshLayout; //下拉刷新控件
 
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        // 去除默认标题栏
-//        supportRequestWindowFeature(Window.FEATURE_NO_TITLE);
         // 状态栏改为全透明
         Window window = getWindow();
         window.addFlags(WindowManager.LayoutParams.FLAG_DRAWS_SYSTEM_BAR_BACKGROUNDS);
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         window.setStatusBarColor(Color.TRANSPARENT);
         window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
-        // 进入主页
-        setContentView(R.layout.main_activity);
-
-        // 设置toolbar（原先的fitsSystemWindows方式会导致软键盘挤压布局，因此改成此方式）
-        Toolbar mToolbar = (Toolbar) findViewById(R.id.main_toolbar);
-        setSupportActionBar(mToolbar);
-        if (getSupportActionBar() != null) {
-            getSupportActionBar().setDisplayShowTitleEnabled(false);
-        }
-
-        // 点击按钮打开侧边栏（设置事件）
-        final ImageView menu_main = findViewById(R.id.menu_main);
-        menu_main.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                DrawerLayout drawer = findViewById(R.id.drawer_layout);
-                drawer.openDrawer(GravityCompat.START);
-                // 设置侧边栏点击事件(menu元素在侧边栏打开之前是不加载的，因此要在这里设置点击事件）
-                set_sides_click_listener(drawer);
-            }
-        });
-
         // 获取用户设置
         SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
         String name = preferences.getString("name","未设置");
         String uid = preferences.getString("uid","0");
         String contain = preferences.getString("contain","1");
         String from = preferences.getString("from","1");
+        // 进入主页
+        setContentView(R.layout.main_activity);
 
+        // 设置toolbar（原先的fitsSystemWindows方式会导致软键盘挤压布局，因此改成此方式）
+        Toolbar mToolbar = (Toolbar) findViewById(R.id.main_toolbar);
+        TextView menu_name = findViewById(R.id.menu_name);
+        menu_name.setText(name); // 设置昵称
+        setSupportActionBar(mToolbar);
+        if (getSupportActionBar() != null) {
+            getSupportActionBar().setDisplayShowTitleEnabled(false);
+        }
+        // Rect start
+        View tt = findViewById(R.id.videolist_recycler);
+        List<Rect> test = new ArrayList<>();
+//        test.add(new Rect(0,237,108,2339));
+//        test.add(new Rect(0,0,80,800));
+        test.add(new Rect(0,801,80,1200));
+        tt.setSystemGestureExclusionRects(test);
+        //  Rect end
+        // 点击按钮打开侧边栏（设置事件）
+        final ImageView menu_main = findViewById(R.id.menu_main);
+        menu_main.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                DrawerLayout drawer = findViewById(R.id.drawer_root);
+                drawer.openDrawer(GravityCompat.START);
+                // 设置侧边栏点击事件(menu元素在侧边栏打开之前是不加载的，因此要在这里设置点击事件）
+                set_sides_click_listener(drawer);
+            }
+        });
 
         // 动态设置侧边栏日期显示
         set_dateinfo();
@@ -125,12 +130,26 @@ public class MainActivity extends AppCompatActivity {
                         videoList.clear();
                         videoList.addAll((Collection<? extends Video>) msg.getData().getSerializable("videoList"));
                         mainAdapter.notifyDataSetChanged();
+                        swipeRefreshLayout.setRefreshing(false);
                         break;
                     default:
                         break;
                 }
             }
         };
+        // 下拉刷新
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
+        swipeRefreshLayout.setColorSchemeResources(R.color.teal_200);
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                String uid = preferences.getString("uid","0");
+                String contain = preferences.getString("contain","1");
+                String from = preferences.getString("from","1");
+                MyFunction.get_video_info(myHandler,uid,contain,from);
+//                swipeRefreshLayout.setRefreshing(false);
+            }
+        });
         MyFunction.get_video_info(myHandler,uid,contain,from);
 
 
@@ -151,7 +170,22 @@ public class MainActivity extends AppCompatActivity {
             }
         });
 
+
     }
+
+    @Override
+    protected void onResume() {
+        super.onResume();
+        // 设置昵称
+        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String name = preferences.getString("name","未设置");
+        TextView menu_name = findViewById(R.id.menu_name);
+        menu_name.setText(name);
+        // 刷新页面(简单起见就直接点击刷新按钮了）
+        View flush_button = findViewById(R.id.flush_button);
+        flush_button.performClick();
+    }
+
 
     private void set_sides_click_listener(DrawerLayout drawer) {
         // 主页
@@ -251,6 +285,18 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 Intent i = new Intent(v.getContext(),SettingsActivity.class);
                 startActivity(i);
+            }
+        });
+        // 关于
+        View menu_about = findViewById(R.id.menu_about);
+        menu_about.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent= new Intent();
+                intent.setAction("android.intent.action.VIEW");
+                Uri content_url = Uri.parse("https://github.com/jimieguang/VideoDetected");
+                intent.setData(content_url);
+                startActivity(intent);
             }
         });
     }

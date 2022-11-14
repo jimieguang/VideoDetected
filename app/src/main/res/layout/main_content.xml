@@ -7,12 +7,16 @@
     android:layout_width="match_parent"
     android:layout_height="match_parent">
 
-
-    <androidx.recyclerview.widget.RecyclerView
-        android:id="@+id/videolist_recycler"
+    <androidx.swiperefreshlayout.widget.SwipeRefreshLayout
+        android:id="@+id/swipeRefreshLayout"
         android:layout_width="match_parent"
         android:layout_height="match_parent">
-    </androidx.recyclerview.widget.RecyclerView>
+        <androidx.recyclerview.widget.RecyclerView
+            android:id="@+id/videolist_recycler"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"/>
+
+    </androidx.swiperefreshlayout.widget.SwipeRefreshLayout>
 
     <com.google.android.material.floatingactionbutton.FloatingActionButton
         android:id="@+id/flush_button"
@@ -24,7 +28,5 @@
         android:clickable="true"
         fab:srcCompat="@android:drawable/ic_popup_sync"
         tools:ignore="ContentDescription,SpeakableTextPresentCheck" />
-
-
 </androidx.coordinatorlayout.widget.CoordinatorLayout>
 

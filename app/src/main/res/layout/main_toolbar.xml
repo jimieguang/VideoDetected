@@ -22,12 +22,16 @@
             android:scaleType="fitCenter"
             android:paddingEnd="30dp"/>
 
-        <Spinner
-            android:id="@+id/toolbar_main"
+        <TextView
+            android:id="@+id/menu_name"
             android:layout_width="wrap_content"
             android:layout_height="match_parent"
-            android:entries="@array/users"
-            android:scrollbarSize="18dp" />
+            android:paddingStart="20dp"
+            android:text="用户1"
+            android:textColor="@color/white"
+            android:textSize="16sp"
+            android:gravity="center_vertical"
+            fab:drawableEndCompat="@drawable/ic_anime" />
     </LinearLayout>
 
 
