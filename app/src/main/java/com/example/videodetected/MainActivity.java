@@ -110,7 +110,6 @@ public class MainActivity extends AppCompatActivity {
 
         //页面主题元素 加载/渲染（recyclerview)
         RecyclerView recyclerView = findViewById(R.id.videolist_recycler);
-
         videoList = new ArrayList<>();
 
 
@@ -130,7 +129,7 @@ public class MainActivity extends AppCompatActivity {
                         videoList.clear();
                         videoList.addAll((Collection<? extends Video>) msg.getData().getSerializable("videoList"));
                         mainAdapter.notifyDataSetChanged();
-                        swipeRefreshLayout.setRefreshing(false);
+                        swipeRefreshLayout.setRefreshing(false);  // 停止下拉刷新动画
                         break;
                     default:
                         break;
@@ -147,10 +146,8 @@ public class MainActivity extends AppCompatActivity {
                 String contain = preferences.getString("contain","1");
                 String from = preferences.getString("from","1");
                 MyFunction.get_video_info(myHandler,uid,contain,from);
-//                swipeRefreshLayout.setRefreshing(false);
             }
         });
-        MyFunction.get_video_info(myHandler,uid,contain,from);
 
 
         // 设置监听器以拿到DetailActivity返回的数据（代替StartActivityForResult）
