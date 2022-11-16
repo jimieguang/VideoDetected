@@ -11,6 +11,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
 import android.view.WindowManager;
@@ -22,6 +23,7 @@ import androidx.activity.result.ActivityResult;
 import androidx.activity.result.ActivityResultCallback;
 import androidx.activity.result.ActivityResultLauncher;
 import androidx.activity.result.contract.ActivityResultContracts;
+import androidx.annotation.NonNull;
 import androidx.appcompat.app.AlertDialog;
 import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
@@ -34,6 +36,8 @@ import androidx.recyclerview.widget.LinearLayoutManager;
 import androidx.recyclerview.widget.RecyclerView;
 import androidx.swiperefreshlayout.widget.SwipeRefreshLayout;
 
+import com.google.android.material.navigation.NavigationView;
+
 import java.util.ArrayList;
 import java.util.Calendar;
 import java.util.Collection;
@@ -45,6 +49,7 @@ public class MainActivity extends AppCompatActivity {
     private MainAdapter mainAdapter;
     private Handler myHandler;
     private SwipeRefreshLayout swipeRefreshLayout; //下拉刷新控件
+    private SharedPreferences preferences;
 
 
     @Override
@@ -57,7 +62,7 @@ public class MainActivity extends AppCompatActivity {
         window.setStatusBarColor(Color.TRANSPARENT);
         window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         // 获取用户设置
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
         String name = preferences.getString("name","未设置");
         String uid = preferences.getString("uid","0");
         String contain = preferences.getString("contain","1");
@@ -88,25 +93,16 @@ public class MainActivity extends AppCompatActivity {
             public void onClick(View v) {
                 DrawerLayout drawer = findViewById(R.id.drawer_root);
                 drawer.openDrawer(GravityCompat.START);
-                // 设置侧边栏点击事件(menu元素在侧边栏打开之前是不加载的，因此要在这里设置点击事件）
-                set_sides_click_listener(drawer);
             }
         });
+        // 绑定侧边栏点击事件
+        set_sides_click();
 
         // 动态设置侧边栏日期显示
         set_dateinfo();
 
-        // 设置刷新按钮
-        View flush_button = findViewById(R.id.flush_button);
-        flush_button.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                String uid = preferences.getString("uid","0");
-                String contain = preferences.getString("contain","1");
-                String from = preferences.getString("from","1");
-                MyFunction.get_video_info(myHandler,uid,contain,from);
-            }
-        });
+        // 设置刷新事件（点击刷新与下拉刷新）
+        set_fresh_listener();
 
         //页面主题元素 加载/渲染（recyclerview)
         RecyclerView recyclerView = findViewById(R.id.videolist_recycler);
@@ -119,35 +115,6 @@ public class MainActivity extends AppCompatActivity {
         // 注入Adapter配置
         mainAdapter = new MainAdapter(videoList);
         recyclerView.setAdapter(mainAdapter);
-
-        // 接收视频信息获取完成事件（json）
-        myHandler = new Handler(Looper.getMainLooper()){
-            @Override
-            public void handleMessage(Message msg){
-                switch (msg.what){
-                    case 1:
-                        videoList.clear();
-                        videoList.addAll((Collection<? extends Video>) msg.getData().getSerializable("videoList"));
-                        mainAdapter.notifyDataSetChanged();
-                        swipeRefreshLayout.setRefreshing(false);  // 停止下拉刷新动画
-                        break;
-                    default:
-                        break;
-                }
-            }
-        };
-        // 下拉刷新
-        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
-        swipeRefreshLayout.setColorSchemeResources(R.color.teal_200);
-        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
-            @Override
-            public void onRefresh() {
-                String uid = preferences.getString("uid","0");
-                String contain = preferences.getString("contain","1");
-                String from = preferences.getString("from","1");
-                MyFunction.get_video_info(myHandler,uid,contain,from);
-            }
-        });
 
 
         // 设置监听器以拿到DetailActivity返回的数据（代替StartActivityForResult）
@@ -166,6 +133,22 @@ public class MainActivity extends AppCompatActivity {
                 }
             }
         });
+        // 接收视频信息获取完成事件（json）
+        myHandler = new Handler(Looper.getMainLooper()){
+            @Override
+            public void handleMessage(Message msg){
+                switch (msg.what){
+                    case 1:
+                        videoList.clear();
+                        videoList.addAll((Collection<? extends Video>) msg.getData().getSerializable("videoList"));
+                        mainAdapter.notifyDataSetChanged();
+                        swipeRefreshLayout.setRefreshing(false);  // 停止下拉刷新动画
+                        break;
+                    default:
+                        break;
+                }
+            }
+        };
 
 
     }
@@ -181,121 +164,6 @@ public class MainActivity extends AppCompatActivity {
         // 刷新页面(简单起见就直接点击刷新按钮了）
         View flush_button = findViewById(R.id.flush_button);
         flush_button.performClick();
-    }
-
-
-    private void set_sides_click_listener(DrawerLayout drawer) {
-        // 主页
-        View menu_index = findViewById(R.id.menu_index);
-        menu_index.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // 关闭侧边栏
-                drawer.closeDrawers();
-            }
-        });
-        // 排序
-        View menu_sort = findViewById(R.id.menu_sort);
-        menu_sort.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // 关闭侧边栏
-                drawer.closeDrawers();
-                final String[] choiceItems = new String[]{"上传日期","时长","播放量","弹幕量"};
-                AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
-                builder.setTitle("排序依据");
-                builder.setIcon(R.mipmap.ic_launcher);
-                builder.setItems(choiceItems, new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        switch(which){
-                            case 0:
-                                MyFunction.sort_videoList_by(videoList,"upload_time");
-                                break;
-                            case 1:
-                                MyFunction.sort_videoList_by(videoList,"duration");
-                                break;
-                            case 2:
-                                MyFunction.sort_videoList_by(videoList,"play_num");
-                                break;
-                            case 3:
-                                MyFunction.sort_videoList_by(videoList,"bullet_num");
-                                break;
-                        }
-                        mainAdapter.notifyDataSetChanged();
-                    }
-                });
-                builder.show();
-            }
-        });
-        // 搜索
-        View menu_search = findViewById(R.id.menu_search);
-        menu_search.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                // 关闭侧边栏
-                drawer.closeDrawers();
-                Dialog dialog = new Dialog(v.getContext());
-
-                // searchView相关设置
-                SearchView mSearchView = new SearchView(v.getContext());
-                mSearchView.setIconifiedByDefault(false);//搜索图标是否显示在搜索框内
-                mSearchView.setSubmitButtonEnabled(false);//设置搜索框展开时是否显示提交按钮，可不显示
-                mSearchView.setImeOptions(EditorInfo.IME_ACTION_SEARCH);//让键盘的回车键设置成搜索
-                mSearchView.setIconified(false);//搜索框是否展开，false表示展开
-                mSearchView.setQueryHint("请输入关键字");//设置提示词
-                // 触发事件
-                Dialog finalDialog = dialog;
-                mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
-                    // 提交时关闭dialog
-                    public boolean onQueryTextSubmit(String query) {
-                        finalDialog.dismiss();
-                        return false;
-                    }
-                    // 输入框变动时更新主页面数据
-                    @Override
-                    public boolean onQueryTextChange(String newText) {
-                        videoList.clear();
-                        videoList.addAll(MyFunction.searchFilter_videoList(newText));
-                        mainAdapter.notifyDataSetChanged();
-                        return false;
-                    }
-                });
-//                AlertDialog相关设置
-                AlertDialog.Builder builder = new AlertDialog.Builder(v.getContext());
-                builder.setTitle("检索");
-                builder.setIcon(R.mipmap.ic_launcher);
-                builder.setView(mSearchView);
-                builder.setPositiveButton("搜索", new DialogInterface.OnClickListener() {
-                    @Override
-                    public void onClick(DialogInterface dialog, int which) {
-                        dialog.dismiss();
-                    }
-                });
-                dialog = builder.show();
-            }
-        });
-        // 设置
-        View menu_setting = findViewById(R.id.menu_setting);
-        menu_setting.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent i = new Intent(v.getContext(),SettingsActivity.class);
-                startActivity(i);
-            }
-        });
-        // 关于
-        View menu_about = findViewById(R.id.menu_about);
-        menu_about.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                Intent intent= new Intent();
-                intent.setAction("android.intent.action.VIEW");
-                Uri content_url = Uri.parse("https://github.com/jimieguang/VideoDetected");
-                intent.setData(content_url);
-                startActivity(intent);
-            }
-        });
     }
 
     // 设置侧边栏日期（需要从数字转为英文）
@@ -322,5 +190,131 @@ public class MainActivity extends AppCompatActivity {
         // 星期
         String[] week_list = week_string.split("-");
         week_view.setText(week_list[week-1]);
+    }
+
+    // 设置侧边栏点击事件(menu元素在侧边栏打开之前是不加载的，因此要在navigation View中绑定事件,不能直接获取）
+    private void set_sides_click() {
+        NavigationView nav = findViewById(R.id.sides_nav);
+        nav.setNavigationItemSelectedListener(new NavigationView.OnNavigationItemSelectedListener() {
+            @Override
+            public boolean onNavigationItemSelected(@NonNull MenuItem item) {
+                DrawerLayout drawer = findViewById(R.id.drawer_root);
+                AlertDialog.Builder builder;
+                switch (item.getItemId()){
+                    case R.id.menu_index:
+//                        item.setChecked(false);
+                        drawer.closeDrawers();
+                        break;
+                    case R.id.menu_search:
+                        // 关闭侧边栏
+                        drawer.closeDrawers();
+                        Dialog dialog = new Dialog(MainActivity.this);
+
+                        // searchView相关设置
+                        SearchView mSearchView = new SearchView(MainActivity.this);
+                        mSearchView.setIconifiedByDefault(false);//搜索图标是否显示在搜索框内
+                        mSearchView.setSubmitButtonEnabled(false);//设置搜索框展开时是否显示提交按钮，可不显示
+                        mSearchView.setImeOptions(EditorInfo.IME_ACTION_SEARCH);//让键盘的回车键设置成搜索
+                        mSearchView.setIconified(false);//搜索框是否展开，false表示展开
+                        mSearchView.setQueryHint("请输入关键字");//设置提示词
+                        // 触发事件
+                        Dialog finalDialog = dialog;
+                        mSearchView.setOnQueryTextListener(new SearchView.OnQueryTextListener() {
+                            // 提交时关闭dialog
+                            public boolean onQueryTextSubmit(String query) {
+                                finalDialog.dismiss();
+                                return false;
+                            }
+                            // 输入框变动时更新主页面数据
+                            @Override
+                            public boolean onQueryTextChange(String newText) {
+                                videoList.clear();
+                                videoList.addAll(MyFunction.searchFilter_videoList(newText));
+                                mainAdapter.notifyDataSetChanged();
+                                return false;
+                            }
+                        });
+                        // AlertDialog相关设置
+                        builder = new AlertDialog.Builder(MainActivity.this);
+                        builder.setTitle("检索");
+                        builder.setIcon(R.mipmap.ic_launcher);
+                        builder.setView(mSearchView);
+                        builder.setPositiveButton("搜索", new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                dialog.dismiss();
+                            }
+                        });
+                        dialog = builder.show();
+                        break;
+                    case R.id.menu_sort:
+                        // 关闭侧边栏
+                        drawer.closeDrawers();
+                        final String[] choiceItems = new String[]{"上传日期","时长","播放量","弹幕量"};
+                        builder = new AlertDialog.Builder(MainActivity.this);
+                        builder.setTitle("排序依据");
+                        builder.setIcon(R.mipmap.ic_launcher);
+                        builder.setItems(choiceItems, new DialogInterface.OnClickListener() {
+                            @Override
+                            public void onClick(DialogInterface dialog, int which) {
+                                switch(which){
+                                    case 0:
+                                        MyFunction.sort_videoList_by(videoList,"upload_time");
+                                        break;
+                                    case 1:
+                                        MyFunction.sort_videoList_by(videoList,"duration");
+                                        break;
+                                    case 2:
+                                        MyFunction.sort_videoList_by(videoList,"play_num");
+                                        break;
+                                    case 3:
+                                        MyFunction.sort_videoList_by(videoList,"bullet_num");
+                                        break;
+                                }
+                                mainAdapter.notifyDataSetChanged();
+                            }
+                        });
+                        builder.show();
+                        break;
+                    case R.id.menu_setting:
+                        Intent i = new Intent(MainActivity.this,SettingsActivity.class);
+                        startActivity(i);
+                        break;
+                    case R.id.menu_about:
+                        Intent intent= new Intent();
+                        intent.setAction("android.intent.action.VIEW");
+                        Uri content_url = Uri.parse("https://github.com/jimieguang/VideoDetected");
+                        intent.setData(content_url);
+                        startActivity(intent);
+                        break;
+                }
+                return true;
+            }
+        });
+    }
+
+    //两种刷新事件监听
+    private void set_fresh_listener() {
+        String uid = preferences.getString("uid","0");
+        String contain = preferences.getString("contain","1");
+        String from = preferences.getString("from","1");
+        // 点击刷新
+        View flush_button = findViewById(R.id.flush_button);
+        flush_button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                MyFunction.get_video_info(myHandler,uid,contain,from);
+            }
+        });
+        // 下拉刷新
+        swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
+        swipeRefreshLayout.setColorSchemeResources(R.color.teal_200);
+        swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
+            @Override
+            public void onRefresh() {
+                MyFunction.get_video_info(myHandler,uid,contain,from);
+            }
+        });
+
     }
 }
