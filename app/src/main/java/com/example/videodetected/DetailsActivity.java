@@ -122,8 +122,6 @@ public class DetailsActivity extends SlidingActivity {
         ((InputMethodManager) getSystemService(INPUT_METHOD_SERVICE))
                 .hideSoftInputFromWindow(v.getWindowToken(),
                         InputMethodManager.HIDE_NOT_ALWAYS);
-        // 将数据存到数据库（待议）
-
         // 构建新Video类
         Video new_video = new Video(editTextList,Intent_video.pic_src);
         // 返回保存消息，申请刷新数据

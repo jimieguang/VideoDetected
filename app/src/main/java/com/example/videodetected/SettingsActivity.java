@@ -1,7 +1,10 @@
 package com.example.videodetected;
 
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.text.InputType;
+import android.util.Log;
 import android.view.MenuItem;
 import android.view.View;
 import android.widget.EditText;
@@ -11,9 +14,12 @@ import androidx.appcompat.app.ActionBar;
 import androidx.appcompat.app.AppCompatActivity;
 
 import androidx.preference.EditTextPreference;
+import androidx.preference.Preference;
 import androidx.preference.PreferenceFragmentCompat;
+import androidx.preference.PreferenceManager;
 
 public class SettingsActivity extends AppCompatActivity {
+    public static boolean isChanged = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -45,7 +51,26 @@ public class SettingsActivity extends AppCompatActivity {
         return super.onOptionsItemSelected(item);
     }
 
+    // 截获返回事件，传值使主页面刷新相关数据
+    @Override
+    public void onBackPressed() {
+        if(isChanged){
+            Intent i = new Intent();
+            setResult(RESULT_FIRST_USER,i);
+        }
+        super.onBackPressed();
+    }
+
     public static class SettingsFragment extends PreferenceFragmentCompat {
+        // 触发设置变更事件
+        private SharedPreferences.OnSharedPreferenceChangeListener mListener = new SharedPreferences.OnSharedPreferenceChangeListener() {
+            @Override
+            public void onSharedPreferenceChanged(
+                    SharedPreferences sharedPreferences, String key) {
+                SettingsActivity.isChanged = true;
+            }
+        };
+
         @Override
         public void onCreatePreferences(Bundle savedInstanceState, String rootKey) {
             setPreferencesFromResource(R.xml.root_preferences, rootKey);
@@ -64,6 +89,18 @@ public class SettingsActivity extends AppCompatActivity {
             uid.setOnBindEditTextListener(listener);
             contain.setOnBindEditTextListener(listener);
             from.setOnBindEditTextListener(listener);
+        }
+
+        @Override
+        public void onResume() {
+            super.onResume();
+            getPreferenceManager().getSharedPreferences().registerOnSharedPreferenceChangeListener(this.mListener);
+        }
+
+        @Override
+        public void onPause() {
+            super.onPause();
+            getPreferenceManager().getSharedPreferences().unregisterOnSharedPreferenceChangeListener(this.mListener);
         }
     }
 

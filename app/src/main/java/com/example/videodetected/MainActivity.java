@@ -4,6 +4,7 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
+import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.net.Uri;
@@ -29,7 +30,6 @@ import androidx.appcompat.app.AppCompatActivity;
 import androidx.appcompat.widget.SearchView;
 import androidx.appcompat.widget.Toolbar;
 import androidx.core.view.GravityCompat;
-import androidx.core.view.ViewCompat;
 import androidx.drawerlayout.widget.DrawerLayout;
 import androidx.preference.PreferenceManager;
 import androidx.recyclerview.widget.LinearLayoutManager;
@@ -51,7 +51,6 @@ public class MainActivity extends AppCompatActivity {
     private SwipeRefreshLayout swipeRefreshLayout; //下拉刷新控件
     private SharedPreferences preferences;
 
-
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -61,18 +60,14 @@ public class MainActivity extends AppCompatActivity {
         window.clearFlags(WindowManager.LayoutParams.FLAG_TRANSLUCENT_STATUS);
         window.setStatusBarColor(Color.TRANSPARENT);
         window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
-        // 获取用户设置
-        preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        String name = preferences.getString("name","未设置");
-        String uid = preferences.getString("uid","0");
-        String contain = preferences.getString("contain","1");
-        String from = preferences.getString("from","1");
         // 进入主页
         setContentView(R.layout.main_activity);
 
         // 设置toolbar（原先的fitsSystemWindows方式会导致软键盘挤压布局，因此改成此方式）
         Toolbar mToolbar = (Toolbar) findViewById(R.id.main_toolbar);
         TextView menu_name = findViewById(R.id.menu_name);
+        preferences = PreferenceManager.getDefaultSharedPreferences(this);
+        String name = preferences.getString("name","未设置");
         menu_name.setText(name); // 设置昵称
         setSupportActionBar(mToolbar);
         if (getSupportActionBar() != null) {
@@ -101,9 +96,6 @@ public class MainActivity extends AppCompatActivity {
         // 动态设置侧边栏日期显示
         set_dateinfo();
 
-        // 设置刷新事件（点击刷新与下拉刷新）
-        set_fresh_listener();
-
         //页面主题元素 加载/渲染（recyclerview)
         RecyclerView recyclerView = findViewById(R.id.videolist_recycler);
         videoList = new ArrayList<>();
@@ -131,14 +123,25 @@ public class MainActivity extends AppCompatActivity {
                     videoList.set(position,new_video);
                     mainAdapter.notifyItemChanged(position);
                 }
+                else if(result.getResultCode() == RESULT_FIRST_USER){
+                    // 更新昵称
+                    String name = preferences.getString("name","未设置");
+                    TextView menu_name = findViewById(R.id.menu_name);
+                    menu_name.setText(name);
+                    // 更新刷新事件
+                    set_fresh_listener();
+                    // 更新主页元素
+                    View flush_button = findViewById(R.id.flush_button);
+                    flush_button.performClick();
+                }
             }
         });
-        // 接收视频信息获取完成事件（json）
+        // 响应相关异步事件
         myHandler = new Handler(Looper.getMainLooper()){
             @Override
             public void handleMessage(Message msg){
                 switch (msg.what){
-                    case 1:
+                    case 1: //获取视频信息完成（json）
                         videoList.clear();
                         videoList.addAll((Collection<? extends Video>) msg.getData().getSerializable("videoList"));
                         mainAdapter.notifyDataSetChanged();
@@ -150,20 +153,32 @@ public class MainActivity extends AppCompatActivity {
             }
         };
 
+        // 设置刷新事件（点击刷新、下拉刷新、定时刷新）
+        set_fresh_listener();
+
+        // 刷新页面(简单起见就直接点击刷新按钮了）
+        View flush_button = findViewById(R.id.flush_button);
+        flush_button.performClick();
+
 
     }
 
     @Override
     protected void onResume() {
         super.onResume();
-        // 设置昵称
-        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
-        String name = preferences.getString("name","未设置");
-        TextView menu_name = findViewById(R.id.menu_name);
-        menu_name.setText(name);
-        // 刷新页面(简单起见就直接点击刷新按钮了）
-        View flush_button = findViewById(R.id.flush_button);
-        flush_button.performClick();
+//        // 设置昵称
+//        SharedPreferences preferences = PreferenceManager.getDefaultSharedPreferences(this);
+//        String name = preferences.getString("name","未设置");
+//        TextView menu_name = findViewById(R.id.menu_name);
+//        menu_name.setText(name);
+//        // 刷新页面(简单起见就直接点击刷新按钮了）
+//        View flush_button = findViewById(R.id.flush_button);
+//        flush_button.performClick();
+    }
+
+    @Override
+    protected void onPause() {
+        super.onPause();
     }
 
     // 设置侧边栏日期（需要从数字转为英文）
@@ -202,7 +217,6 @@ public class MainActivity extends AppCompatActivity {
                 AlertDialog.Builder builder;
                 switch (item.getItemId()){
                     case R.id.menu_index:
-//                        item.setChecked(false);
                         drawer.closeDrawers();
                         break;
                     case R.id.menu_search:
@@ -278,7 +292,7 @@ public class MainActivity extends AppCompatActivity {
                         break;
                     case R.id.menu_setting:
                         Intent i = new Intent(MainActivity.this,SettingsActivity.class);
-                        startActivity(i);
+                        MainActivity.launcher.launch(i);
                         break;
                     case R.id.menu_about:
                         Intent intent= new Intent();
@@ -293,11 +307,13 @@ public class MainActivity extends AppCompatActivity {
         });
     }
 
-    //两种刷新事件监听
+    //三种刷新事件监听
     private void set_fresh_listener() {
         String uid = preferences.getString("uid","0");
         String contain = preferences.getString("contain","1");
         String from = preferences.getString("from","1");
+        boolean swipe_sync = preferences.getBoolean("swipe_sync",true);
+        boolean auto_sync = preferences.getBoolean("auto_sync",false);
         // 点击刷新
         View flush_button = findViewById(R.id.flush_button);
         flush_button.setOnClickListener(new View.OnClickListener() {
@@ -308,6 +324,11 @@ public class MainActivity extends AppCompatActivity {
         });
         // 下拉刷新
         swipeRefreshLayout = findViewById(R.id.swipeRefreshLayout);
+            // 设置下拉刷新开关
+        if(!swipe_sync)
+            swipeRefreshLayout.setEnabled(false);
+        else
+            swipeRefreshLayout.setEnabled(true);
         swipeRefreshLayout.setColorSchemeResources(R.color.teal_200);
         swipeRefreshLayout.setOnRefreshListener(new SwipeRefreshLayout.OnRefreshListener() {
             @Override
@@ -315,6 +336,25 @@ public class MainActivity extends AppCompatActivity {
                 MyFunction.get_video_info(myHandler,uid,contain,from);
             }
         });
+        // 定时刷新
+        if(auto_sync){
+            String sync_time = preferences.getString("sync_time","5");
+            Runnable mRunnable = new Runnable() {
+                @Override
+                public void run() {
+                    while(true){
+                        try {
+                            int delay = Integer.parseInt(sync_time) * 60 * 1000;
+                            Thread.sleep(delay);
+                        } catch (InterruptedException e) {
+                            e.printStackTrace();
+                        }
+                        MyFunction.get_video_info(myHandler,uid,contain,from);
+                    }
+                }
+            };
+            new Thread(mRunnable).start();
+        }
 
     }
 }
