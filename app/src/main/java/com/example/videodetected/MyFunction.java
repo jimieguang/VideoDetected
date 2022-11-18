@@ -118,13 +118,17 @@ public class MyFunction {
         String path = Environment.getExternalStorageDirectory().getPath() + "/Pictures/VideoDetect";
         File file=new File(path);
         FileOutputStream fileOutputStream=null;
+        float quality = 80;
+        if(myBitmap.getByteCount()/1024>2048){
+            quality = 50;
+        }
         //文件夹不存在，则创建它
         if(!file.exists()){
             file.mkdir();
         }
         try {
             fileOutputStream=new FileOutputStream(path+"/"+md5(src)+".png");
-            myBitmap.compress(Bitmap.CompressFormat.JPEG, 80,fileOutputStream);
+            myBitmap.compress(Bitmap.CompressFormat.JPEG, (int)quality,fileOutputStream);
             fileOutputStream.flush();
             fileOutputStream.close();
         } catch (Exception e) {
@@ -136,9 +140,25 @@ public class MyFunction {
     public static Bitmap getBitmapFromCache(String src){
         String dir_path = Environment.getExternalStorageDirectory().getPath() + "/Pictures/VideoDetect/";
         String pic_path = dir_path + md5(src) + ".png";
+        // 限制图片最大尺寸
+        int init_width = 1920;
+        int init_height = 1080;
         // 找不到本地图片则返回null
         try{
-            Bitmap bitmap = BitmapFactory.decodeFile(pic_path);
+            BitmapFactory.Options options = new BitmapFactory.Options();
+            options.inJustDecodeBounds = true;   // 此时无bitmap返回值，避免开辟bitmap内存空间
+            BitmapFactory.decodeFile(pic_path,options);
+            int imageHeight = options.outHeight;
+            int imageWidth = options.outWidth;
+            options.inJustDecodeBounds = false;
+            // inSampleSize 缩小2的指数倍，因此需要进行处理
+            int scale = Math.min(imageWidth/init_width,imageHeight/init_height);
+            options.inSampleSize = 1;
+            while(scale!=0){
+                scale /= 2;
+                options.inSampleSize *= 2;
+            }
+            Bitmap bitmap = BitmapFactory.decodeFile(pic_path,options);
             return bitmap;
         } catch (Exception e){
             return null;
