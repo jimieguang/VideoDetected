@@ -1,16 +1,12 @@
 package com.example.videodetected;
 
 
-import android.content.SharedPreferences;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
-
-import androidx.preference.Preference;
-import androidx.preference.PreferenceManager;
 
 import org.json.JSONArray;
 import org.json.JSONException;
@@ -29,7 +25,6 @@ import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Collections;
 import java.util.Comparator;
 import java.util.Date;
 import java.util.List;
@@ -167,20 +162,17 @@ public class MyFunction {
 
     // 对videoList排序(无返回值，sort似乎直接操作了主页面的List)
     public static void sort_videoList_by(List<Video> videoList, String sort_by){
-        videoList.sort(new Comparator<Video>() {
-            @Override
-            public int compare(Video o1, Video o2) {
-                int diff = 0;
-                try {
-                    diff = func_sort_by(o1, o2, sort_by);
-                } catch (ParseException e) {
-                    e.printStackTrace();
-                }
-                // diff>0 -> 1;diff<0 -> -1; else 0
-//                return Integer.compare(diff, 0);
-                // 相反
-                return Integer.compare(0, diff);
+        videoList.sort((o1, o2) -> {
+            int diff = 0;
+            try {
+                diff = func_sort_by(o1, o2, sort_by);
+            } catch (ParseException e) {
+                e.printStackTrace();
             }
+            // diff>0 -> 1;diff<0 -> -1; else 0
+//                return Integer.compare(diff, 0);
+            // 相反
+            return Integer.compare(0, diff);
         });
     }
     // 设置特定的比较方法

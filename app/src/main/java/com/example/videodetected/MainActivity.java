@@ -108,6 +108,9 @@ public class MainActivity extends AppCompatActivity {
         mainAdapter = new MainAdapter(videoList);
         recyclerView.setAdapter(mainAdapter);
 
+        // 监听滑动事件
+        recyclerView.addOnScrollListener(new MainAdapter.ImageAutoLoadScrollListener());
+
 
         // 设置监听器以拿到DetailActivity返回的数据（代替StartActivityForResult）
         // 值得注意的是，该监听器仅能在OnCreate时创建，因此带来了不便（因为触发函数写在Adapter）

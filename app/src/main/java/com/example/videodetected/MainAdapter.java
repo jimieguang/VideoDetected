@@ -1,5 +1,11 @@
 package com.example.videodetected;
 
+import static androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_DRAGGING;
+import static androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_IDLE;
+import static androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_SETTLING;
+
+import static java.security.AccessController.getContext;
+
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -23,6 +29,7 @@ import java.util.List;
 public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder> {
     private final List<Video> videoList;
     private ViewGroup parent;
+    public static boolean isScroll=false;
 
     public MainAdapter(List<Video> videoList) {
         this.videoList = videoList;
@@ -59,12 +66,17 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder
         // 且info属性并不是直接从Video中拿到的，需要稍微处理下
         // item是每个元素的整体页面布局
         Video video = videoList.get(position);
-        // 试图从本地缓存读取图片，如果不存在（返回null）则从互联网下载
-        Bitmap bitmap = MyFunction.getBitmapFromCache(video.pic_src);
-        if (bitmap !=null){
-            holder.image.setImageBitmap(bitmap);
-        }else{
-            MyFunction.getBitmapFromUrl(video.pic_src,myHandler,position);
+        Bitmap bitmap = null;
+        if(!isScroll){
+            // 试图从本地缓存读取图片，如果不存在（返回null）则从互联网下载
+            bitmap = MyFunction.getBitmapFromCache(video.pic_src);
+            if (bitmap !=null){
+                holder.image.setImageBitmap(bitmap);
+            }else{
+                MyFunction.getBitmapFromUrl(video.pic_src,myHandler,position);
+            }
+        }else {
+            holder.image.setImageResource(R.mipmap.sides_image);
         }
 
         holder.upload_time.setText(video.upload_time);
@@ -136,6 +148,37 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder
             this.title = itemView.findViewById(R.id.video_title);
             this.owner = itemView.findViewById(R.id.video_owner);
             this.info = itemView.findViewById(R.id.video_info);
+        }
+    }
+    
+    
+    public static class ImageAutoLoadScrollListener extends RecyclerView.OnScrollListener {
+        @Override
+        public void onScrolled(RecyclerView recyclerView, int dx, int dy) {
+            super.onScrolled(recyclerView, dx, dy);
+        }
+
+        @Override
+        public void onScrollStateChanged(RecyclerView recyclerView, int newState) {
+            super.onScrollStateChanged(recyclerView, newState);
+            switch (newState) {
+                case SCROLL_STATE_IDLE: // The RecyclerView is not currently scrolling.
+                    //当屏幕停止滚动，加载图片(需要刷新一次以重置未加载的图片）
+                    recyclerView.getAdapter().notifyDataSetChanged();
+                    isScroll = false;
+                    System.out.println("2");
+                    break;
+                case SCROLL_STATE_DRAGGING: // The RecyclerView is currently being dragged by outside input such as user touch input.
+                    //当屏幕滚动且用户使用的触碰或手指还在屏幕上，停止加载图片
+                    isScroll = true;
+                    System.out.println("3");
+                    break;
+                case SCROLL_STATE_SETTLING: // The RecyclerView is currently animating to a final position while not under outside control.
+                    //由于用户的操作，屏幕产生惯性滑动，停止加载图片
+                    isScroll = true;
+                    System.out.println("1");
+                    break;
+            }
         }
     }
 
