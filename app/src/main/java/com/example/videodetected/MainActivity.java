@@ -1,10 +1,13 @@
 package com.example.videodetected;
 
+import static androidx.core.view.ViewCompat.setSystemGestureExclusionRects;
+
 import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
 import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
+import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
 import android.net.Uri;
@@ -12,12 +15,15 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
+import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ImageView;
+import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResult;
@@ -50,6 +56,20 @@ public class MainActivity extends AppCompatActivity {
     private Handler myHandler;
     private SwipeRefreshLayout swipeRefreshLayout; //下拉刷新控件
     private SharedPreferences preferences;
+    List<Rect> exclusionRects;
+    View test;
+
+    public void onLayout(
+            boolean changedCanvas, int left, int top, int right, int bottom) {
+        // Update rect bounds and the exclusionRects list
+        setSystemGestureExclusionRects(test,exclusionRects);
+    }
+
+    public void onDraw(Canvas canvas) {
+        // Update rect bounds and the exclusionRects list
+        setSystemGestureExclusionRects(test,exclusionRects);
+    }
+
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -62,7 +82,6 @@ public class MainActivity extends AppCompatActivity {
         window.getDecorView().setSystemUiVisibility(View.SYSTEM_UI_FLAG_LAYOUT_FULLSCREEN | View.SYSTEM_UI_FLAG_LAYOUT_STABLE);
         // 进入主页
         setContentView(R.layout.main_activity);
-
         // 设置toolbar（原先的fitsSystemWindows方式会导致软键盘挤压布局，因此改成此方式）
         Toolbar mToolbar = (Toolbar) findViewById(R.id.main_toolbar);
         TextView menu_name = findViewById(R.id.menu_name);
@@ -78,9 +97,11 @@ public class MainActivity extends AppCompatActivity {
         List<Rect> test = new ArrayList<>();
 //        test.add(new Rect(0,237,108,2339));
 //        test.add(new Rect(0,0,80,800));
-        test.add(new Rect(0,801,80,1200));
+        test.add(new Rect(0,0,80,1200));
         tt.setSystemGestureExclusionRects(test);
         //  Rect end
+
+
         // 点击按钮打开侧边栏（设置事件）
         final ImageView menu_main = findViewById(R.id.menu_main);
         menu_main.setOnClickListener(new View.OnClickListener() {
@@ -182,6 +203,14 @@ public class MainActivity extends AppCompatActivity {
     @Override
     protected void onPause() {
         super.onPause();
+    }
+
+    @Override
+    public boolean onKeyDown(int keyCode, KeyEvent event) {
+        if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
+            return false;
+        }
+        return super.onKeyDown(keyCode, event);
     }
 
     // 设置侧边栏日期（需要从数字转为英文）

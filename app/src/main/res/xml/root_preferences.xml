@@ -9,6 +9,7 @@
         <EditTextPreference
             app:key="uid"
             app:title="UID"
+            app:defaultValue="38053181"
             app:useSimpleSummaryProvider="true" />
 
     </PreferenceCategory>
@@ -35,7 +36,7 @@
         <EditTextPreference
             app:key="contain"
             app:title="主页容量"
-            app:defaultValue="5"
+            app:defaultValue="10"
             app:useSimpleSummaryProvider="true" />
 
         <EditTextPreference

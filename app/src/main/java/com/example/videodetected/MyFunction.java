@@ -7,12 +7,14 @@ import android.os.Bundle;
 import android.os.Environment;
 import android.os.Handler;
 import android.os.Message;
+import android.util.Log;
 
 import org.json.JSONArray;
 import org.json.JSONException;
 import org.json.JSONObject;
 
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
@@ -25,8 +27,8 @@ import java.security.NoSuchAlgorithmException;
 import java.text.ParseException;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Comparator;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.List;
 
 import okhttp3.Call;
@@ -37,6 +39,7 @@ import okhttp3.Response;
 public class MyFunction {
     static List<Video> videoList;
     static Bitmap myBitmap;
+    static HashMap<String,Bitmap> bitmapHashMap = new HashMap<>();
 
     public static void get_video_info(Handler myHandler,String uid,String contain,String from){
         videoList = new ArrayList<>();
@@ -95,8 +98,10 @@ public class MyFunction {
                     connection.connect();
                     InputStream input = connection.getInputStream();
                     myBitmap = BitmapFactory.decodeStream(input);
+                    // 缓存至内存中
+                    saveBitmapCache(myBitmap,src);
                     // 将图像保存在本地，文件名为md5加密后的video网址信息
-                    saveBitmap(myBitmap,src);
+                    saveBitmapDisk(myBitmap,src);
                     // 给MainAdapter传递myBitmap数据并使其刷新特定元素（获取完图片了）
                     Message msg = Message.obtain();
                     msg.what = 1;
@@ -109,7 +114,9 @@ public class MyFunction {
         }).start();
     }
 
-    private static void saveBitmap(Bitmap myBitmap,String src) {
+    private static void saveBitmapDisk(Bitmap myBitmap, String src) {
+        if(myBitmap==null)
+            return;
         String path = Environment.getExternalStorageDirectory().getPath() + "/Pictures/VideoDetect";
         File file=new File(path);
         FileOutputStream fileOutputStream=null;
@@ -131,33 +138,72 @@ public class MyFunction {
         }
     }
 
-    // 从本地缓存获取图片信息
-    public static Bitmap getBitmapFromCache(String src){
-        String dir_path = Environment.getExternalStorageDirectory().getPath() + "/Pictures/VideoDetect/";
-        String pic_path = dir_path + md5(src) + ".png";
+
+    private static void saveBitmapCache(Bitmap myBitmap,String src) {
         // 限制图片最大尺寸
-        int init_width = 1920;
-        int init_height = 1080;
-        // 找不到本地图片则返回null
-        try{
-            BitmapFactory.Options options = new BitmapFactory.Options();
-            options.inJustDecodeBounds = true;   // 此时无bitmap返回值，避免开辟bitmap内存空间
-            BitmapFactory.decodeFile(pic_path,options);
-            int imageHeight = options.outHeight;
-            int imageWidth = options.outWidth;
-            options.inJustDecodeBounds = false;
-            // inSampleSize 缩小2的指数倍，因此需要进行处理
-            int scale = Math.min(imageWidth/init_width,imageHeight/init_height);
-            options.inSampleSize = 1;
-            while(scale!=0){
-                scale /= 2;
-                options.inSampleSize *= 2;
-            }
-            Bitmap bitmap = BitmapFactory.decodeFile(pic_path,options);
-            return bitmap;
-        } catch (Exception e){
-            return null;
+        int max_width = 1920;
+        int max_height = 1080;
+        if( myBitmap==null){
+            Log.d("errot","TTTTTTTT");
         }
+        assert myBitmap != null;
+        int imageWidth = myBitmap.getWidth();
+        int imageHeight = myBitmap.getHeight();
+        int scale = Math.max(imageWidth/max_width,imageHeight/max_height);
+        if(scale>1){
+            imageWidth /= imageWidth / scale;
+            imageHeight /= imageHeight / scale;
+        }
+        Bitmap BitmapCache = Bitmap.createScaledBitmap(myBitmap,imageWidth,imageHeight,true);
+        bitmapHashMap.put(src,BitmapCache);
+    }
+    public static Bitmap getBitmapFromCache(String src){
+        if(bitmapHashMap.containsKey(src)){
+            return bitmapHashMap.get(src);
+        }
+        return null;
+    }
+
+    // 从本地缓存获取图片信息
+    public static void getBitmapFromDisk(String src, Handler myHandler, int position){
+        myBitmap = null;
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                String dir_path = Environment.getExternalStorageDirectory().getPath() + "/Pictures/VideoDetect/";
+                String pic_path = dir_path + md5(src) + ".png";
+                // 限制图片最大尺寸
+                int max_width = 1920;
+                int max_height = 1080;
+                // 找不到本地图片则返回null
+                File file = new File(pic_path);
+                if(!file.exists()){
+                    getBitmapFromUrl(src,myHandler,position);
+                }else{
+                    BitmapFactory.Options options = new BitmapFactory.Options();
+                    options.inJustDecodeBounds = true;   // 此时无bitmap返回值，避免开辟bitmap内存空间
+                    BitmapFactory.decodeFile(pic_path,options);
+                    int imageHeight = options.outHeight;
+                    int imageWidth = options.outWidth;
+                    options.inJustDecodeBounds = false;
+                    // inSampleSize 缩小2的指数倍，因此需要进行处理
+                    int scale = Math.min(imageWidth/max_width,imageHeight/max_height);
+                    options.inSampleSize = 1;
+                    while(scale!=0){
+                        scale /= 2;
+                        options.inSampleSize *= 2;
+                    }
+                    Bitmap bitmap = BitmapFactory.decodeFile(pic_path,options);
+                    // 保存到内存中
+                    saveBitmapCache(bitmap,src);
+                    // 给MainAdapter传递myBitmap数据并使其刷新特定元素（获取完图片了）
+                    Message msg = Message.obtain();
+                    msg.what = 1;
+                    msg.arg1 = position;
+                    myHandler.sendMessage(msg);
+                }
+            }
+        }).start();
     }
 
     // 对videoList排序(无返回值，sort似乎直接操作了主页面的List)

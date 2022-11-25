@@ -4,8 +4,6 @@ import static androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_DRAGGING;
 import static androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_IDLE;
 import static androidx.recyclerview.widget.RecyclerView.SCROLL_STATE_SETTLING;
 
-import static java.security.AccessController.getContext;
-
 import android.content.Context;
 import android.content.Intent;
 import android.graphics.Bitmap;
@@ -13,6 +11,7 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
+import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
@@ -22,7 +21,6 @@ import android.widget.TextView;
 import androidx.annotation.NonNull;
 import androidx.recyclerview.widget.RecyclerView;
 
-import java.util.ArrayList;
 import java.util.List;
 
 // Adapter创建目的是“联通”layout与RecyclerView（解耦的一部分 ps：虽然我感觉变得更复杂了）
@@ -42,7 +40,10 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder
             switch (msg.what){
                 case 1:
                     int position = msg.arg1;
-                    notifyItemChanged(position);
+                    // 为保证用户体验，滑动时不应刷新元素
+                    if(!isScroll){
+                        notifyItemChanged(position);
+                    }
                     break;
                 default:
                     break;
@@ -67,16 +68,15 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder
         // item是每个元素的整体页面布局
         Video video = videoList.get(position);
         Bitmap bitmap = null;
-        if(!isScroll){
-            // 试图从本地缓存读取图片，如果不存在（返回null）则从互联网下载
-            bitmap = MyFunction.getBitmapFromCache(video.pic_src);
-            if (bitmap !=null){
-                holder.image.setImageBitmap(bitmap);
-            }else{
-                MyFunction.getBitmapFromUrl(video.pic_src,myHandler,position);
-            }
+        // 先试图从内存读取图片，如果不存在则从硬盘读取
+        bitmap = MyFunction.getBitmapFromCache(video.pic_src);
+        if (bitmap !=null){
+            holder.image.setImageBitmap(bitmap);
         }else {
+            // 设置默认图片
             holder.image.setImageResource(R.mipmap.sides_image);
+            // 试图从本地硬盘读取图片（异步），如果本地不存在则从互联网下载
+            MyFunction.getBitmapFromDisk(video.pic_src,myHandler,position);
         }
 
         holder.upload_time.setText(video.upload_time);
@@ -166,12 +166,10 @@ public class MainAdapter extends RecyclerView.Adapter<MainAdapter.MainViewHolder
                     //当屏幕停止滚动，加载图片(需要刷新一次以重置未加载的图片）
                     recyclerView.getAdapter().notifyDataSetChanged();
                     isScroll = false;
-                    System.out.println("2");
                     break;
                 case SCROLL_STATE_DRAGGING: // The RecyclerView is currently being dragged by outside input such as user touch input.
                     //当屏幕滚动且用户使用的触碰或手指还在屏幕上，停止加载图片
                     isScroll = true;
-                    System.out.println("3");
                     break;
                 case SCROLL_STATE_SETTLING: // The RecyclerView is currently animating to a final position while not under outside control.
                     //由于用户的操作，屏幕产生惯性滑动，停止加载图片
