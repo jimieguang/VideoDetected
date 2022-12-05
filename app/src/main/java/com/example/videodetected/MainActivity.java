@@ -200,19 +200,6 @@ public class MainActivity extends AppCompatActivity {
 //        flush_button.performClick();
     }
 
-    @Override
-    protected void onPause() {
-        super.onPause();
-    }
-
-    @Override
-    public boolean onKeyDown(int keyCode, KeyEvent event) {
-        if (keyCode == KeyEvent.KEYCODE_BACK && event.getRepeatCount() == 0) {
-            return false;
-        }
-        return super.onKeyDown(keyCode, event);
-    }
-
     // 设置侧边栏日期（需要从数字转为英文）
     void set_dateinfo() {
         String month_string = "Jan-Feb-Mar-Apr-May-Jun-Jul-Aug-Seg-Oct-Nov-Dec";

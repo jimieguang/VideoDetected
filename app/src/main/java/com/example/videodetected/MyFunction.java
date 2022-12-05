@@ -47,7 +47,7 @@ public class MyFunction {
         new Thread(new Runnable() {
             @Override
             public void run() {
-                String url = String.format("https://api.bilibili.com/x/space/arc/search?mid=%s&pn=%s&ps=%s&index=1&order=pubdate&order_avoided=true&jsonp=jsonp",uid,from,contain);
+                String url = String.format("https://api.bilibili.com/x/space/wbi/arc/search?mid=%s&pn=%s&ps=%s&index=1&order=pubdate",uid,from,contain);
                 OkHttpClient client = new OkHttpClient();
                 final Request request = new Request.Builder()
                         .header("user-agent","Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/107.0.0.0 Safari/537.36 Edg/107.0.1418.35")
@@ -143,9 +143,6 @@ public class MyFunction {
         // 限制图片最大尺寸
         int max_width = 1920;
         int max_height = 1080;
-        if( myBitmap==null){
-            Log.d("errot","TTTTTTTT");
-        }
         assert myBitmap != null;
         int imageWidth = myBitmap.getWidth();
         int imageHeight = myBitmap.getHeight();
