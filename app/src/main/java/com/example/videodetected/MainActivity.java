@@ -6,7 +6,6 @@ import android.app.Dialog;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.SharedPreferences;
-import android.content.SharedPreferences.OnSharedPreferenceChangeListener;
 import android.graphics.Canvas;
 import android.graphics.Color;
 import android.graphics.Rect;
@@ -15,15 +14,12 @@ import android.os.Bundle;
 import android.os.Handler;
 import android.os.Looper;
 import android.os.Message;
-import android.view.KeyEvent;
 import android.view.MenuItem;
 import android.view.View;
 import android.view.Window;
-import android.view.WindowInsets;
 import android.view.WindowManager;
 import android.view.inputmethod.EditorInfo;
 import android.widget.ImageView;
-import android.widget.LinearLayout;
 import android.widget.TextView;
 
 import androidx.activity.result.ActivityResult;
@@ -328,7 +324,7 @@ public class MainActivity extends AppCompatActivity {
 
     //三种刷新事件监听
     private void set_fresh_listener() {
-        String uid = preferences.getString("uid","0");
+        String uid = preferences.getString("uid","12355462");
         String contain = preferences.getString("contain","1");
         String from = preferences.getString("from","1");
         boolean swipe_sync = preferences.getBoolean("swipe_sync",true);
